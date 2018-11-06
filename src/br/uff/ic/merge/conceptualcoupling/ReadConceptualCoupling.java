@@ -29,7 +29,7 @@ public static void readFiles(String filePath) throws IOException{
                 return file.getName().endsWith(".txt");
             }
         }; 
-        filePath = filePath + "\\Output\\";
+        filePath = filePath + File.separator + "Output" + File.separator;
         String filePathName = filePath + "MergeConceptualCoupling" + ".txt";
         FileWriter arquivo = null;
         arquivo = new FileWriter(new File(filePathName));
