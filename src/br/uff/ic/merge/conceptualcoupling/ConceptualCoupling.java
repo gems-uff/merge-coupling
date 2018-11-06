@@ -20,7 +20,7 @@ public class ConceptualCoupling {
     public static void main(String[] args) throws IOException {
         List<String> projectsPath = new ArrayList<>();
 
-        File directory = new File(System.getProperty("user.home") + "\\gitProjects\\");
+        File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File files[] = directory.listFiles();
 
         for (File projectDir : files) //list the projects
@@ -32,27 +32,26 @@ public class ConceptualCoupling {
         }
 
         for (String projectPath : projectsPath) {
-            String projectName = projectPath.substring(projectPath.lastIndexOf("\\") + 1, projectPath.length());
+            String projectName = projectPath.substring(projectPath.lastIndexOf(File.separator) + 1, projectPath.length());
 
-            String path = System.getProperty("user.home") + "\\projects\\" + projectName;
+            String path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName;
             new File(path).mkdir();
-            new File(path + "\\Input").mkdir();
+            new File(path + File.separator + "Input").mkdir();
 
             // create the Output, ClassLevelGranularity and CorpusPreProcessed folders to be used for Semantic Similarity Java
-            new File(path + "\\Output").mkdir();
-            new File(path + "\\Output\\ClassLevelGranularity").mkdir();
-            new File(path + "\\Output\\ClassLevelGranularity\\CorpusPreProcessed").mkdir();
+            new File(path + File.separator + "Output").mkdir();
+            new File(path + File.separator + "Output" + File.separator + "ClassLevelGranularity").mkdir();
+            new File(path + File.separator + "Output" + File.separator + "ClassLevelGranularity" + File.separator + "CorpusPreProcessed").mkdir();
 
             System.out.println("Extracting Diff ...  " + projectPath);
             generateFilesDiff(projectPath, projectName);
-            
+
             System.out.println("Calculating Similarity ... " + projectPath);
             Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName);
             
             System.out.println("Processing files ...  " + projectPath);
             ReadConceptualCoupling.readFiles(path);
         }
-
     }
 
     public static void generateFilesDiff(String projectPath, String projectName) throws IOException {
@@ -95,11 +94,11 @@ public class ConceptualCoupling {
             String firstLine = diff.get(0);
             diff.remove(diff.get(0));
 
-            String path = System.getProperty("user.home") + "\\projects\\" + projectName + "\\Input";
+            String path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
 
             //create the first case merge file
             if (firstLine.startsWith("diff")) {
-                path = path + "\\" + mergeName;
+                path = path + File.separator + mergeName;
                 new File(path).mkdir();
 
                 arquivo = createFile(firstLine, projectName, path, branchName);
@@ -140,7 +139,7 @@ public class ConceptualCoupling {
         if (!fileName.endsWith("java")) {
             fileName = "REMOVE";
         }
-        filePath = path + "\\" + fileName;
+        filePath = path + File.separator + fileName;
         packageName = "package " + projectName + "\n";
         className = "class " + fileName + "\n";
         FileWriter arquivo = new FileWriter(new File(filePath));
