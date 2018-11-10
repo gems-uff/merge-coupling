@@ -5,11 +5,15 @@
  */
 package br.uff.ic.merge.conceptualcoupling;
 
+import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -17,7 +21,7 @@ import java.io.IOException;
  */
 public class ConceptualCoupling {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         List<String> projectsPath = new ArrayList<>();
 
         File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
@@ -42,22 +46,34 @@ public class ConceptualCoupling {
             new File(path + File.separator + "Output").mkdir();
             new File(path + File.separator + "Output" + File.separator + "ClassLevelGranularity").mkdir();
             new File(path + File.separator + "Output" + File.separator + "ClassLevelGranularity" + File.separator + "CorpusPreProcessed").mkdir();
-
-            System.out.println("Extracting Diff ...  " + projectPath);
-            generateFilesDiff(projectPath, projectName);
-
-            System.out.println("Calculating Similarity ... " + projectPath);
-            Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName);
             
+            //System.out.println("Extracting Diff ...  " + projectPath);
+            //generateFilesDiff(projectPath, projectName);
+
+            try {
+                System.out.println("Calculating Similarity ... " + projectPath);
+                Process process = Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName);
+
+                //Check if the process is finished
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                while ((reader.readLine()) != null) {
+                }
+                process.waitFor();
+
+            } catch (IOException ex) {
+                Logger.getLogger(Git.class.getName()).log(Level.SEVERE, null, ex);
+            }
+           
             System.out.println("Processing files ...  " + projectPath);
             ReadConceptualCoupling.readFiles(path);
+            ReadConceptualCoupling.createFinalResult(path);
         }
     }
 
     public static void generateFilesDiff(String projectPath, String projectName) throws IOException {
         List<String> mergeRevisions = Git.getMergeRevisions(projectPath);
 
-        String project, SHAMerge, SHALeft, SHARight, SHAmergeBase;
+        String project, SHAMerge, SHALeft, SHARight, SHAmergeBase, path;
         SHALeft = "";
         SHARight = "";
         SHAmergeBase = "";
@@ -75,26 +91,30 @@ public class ConceptualCoupling {
                 SHARight = parents.get(1);
                 SHAmergeBase = Git.getMergeBase(projectPath, SHALeft, SHARight);
             }
-
-            String mergeName = "Merge " + SHAMerge;
-            extractDiff(projectPath, SHAmergeBase, SHALeft, mergeName, "Left", projectName);
-            extractDiff(projectPath, SHAmergeBase, SHARight, mergeName, "Right", projectName);
+            //Check if is a fast-forward merge
+            if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
+                path = extractDiff(projectPath, SHAmergeBase, SHALeft, SHAMerge, "Left", projectName);
+                path = extractDiff(projectPath, SHAmergeBase, SHARight, SHAMerge, "Right", projectName);
+                removeFiles(path);
+            }
 
         }
     }
 
-    public static void extractDiff(String projectPath, String SHAmergeBase, String SHALeft, String mergeName, String branchName, String projectName) throws IOException {
+    public static String extractDiff(String projectPath, String SHAmergeBase, String SHALeft, String mergeName, String branchName, String projectName) throws IOException {
 
         List<String> diff = Git.diff(projectPath, SHAmergeBase, SHALeft);
 
         FileWriter arquivo = null;
+
+        String path = "";
 
         //remove the first list line
         if (!(diff.size() == 0)) {
             String firstLine = diff.get(0);
             diff.remove(diff.get(0));
 
-            String path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
+            path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
 
             //create the first case merge file
             if (firstLine.startsWith("diff")) {
@@ -116,19 +136,39 @@ public class ConceptualCoupling {
 
             }
             arquivo.close();
+        }
+        return path;
+    }
 
-            //remove the file that is not a javafile
-            String name;
-            File directory = new File(path);
-            File files[] = directory.listFiles();
-            for (File file : files) {
-                name = file.getName();
-                if (name.contains("REMOVE")) {
-                    file.delete();
+    public static void removeFiles(String path) {
+        //remove the file that is not a javafile
+        String name;
+        File directory = new File(path);
+        File files[] = directory.listFiles();
+        for (File file : files) {
+            name = file.getName();
+            if (name.contains("REMOVE")) {
+                file.delete();
+            }
+        }
+        //Check if the directory is empty or if it has just one file and delete
+        String nameAux;
+        File filesAux[] = directory.listFiles();
+        int directorySize = filesAux.length;
+        if ((directorySize == 0) || (directorySize == 1)) {
+            if (directorySize == 1) {
+                for (File fileAux : filesAux) {
+                    nameAux = fileAux.getName();
+                    fileAux.delete();
                 }
+                directory.delete();
+            } else {
+                directory.delete();
+
             }
 
         }
+
     }
 
     public static FileWriter createFile(String lineDiff, String projectName, String path, String branchName) throws IOException {
@@ -147,6 +187,5 @@ public class ConceptualCoupling {
         arquivo.write(className);
 
         return arquivo;
-
     }
 }
