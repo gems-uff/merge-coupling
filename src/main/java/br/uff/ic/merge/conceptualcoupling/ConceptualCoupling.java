@@ -23,6 +23,12 @@ import static br.uff.ic.coupling.CouplingChunks.leftCCMethodDeclarations;
 import br.uff.ic.mergeguider.javaparser.ClassLanguageContructs;
 import br.uff.ic.mergeguider.languageConstructs.MyMethodDeclaration;
 import br.uff.ic.coupling.Git;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 /**
  *
@@ -30,13 +36,43 @@ import br.uff.ic.coupling.Git;
  */
 public class ConceptualCoupling {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException, ParseException {
         List<String> projectsPath = new ArrayList<>();
 
-        File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
-        File files[] = directory.listFiles();
+        final Options options = new Options();
 
-        String sandbox = "C:\\Cristiane\\mestrado\\sandbox";
+        String input = "";
+        String output = "";
+        Double threshold = 0.0;
+        
+        try {
+            options.addOption("i", true, "input directory");
+            options.addOption("o", true, "output directory");
+            options.addOption("t", true, "threshold from 0.0 to 1.0");
+
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("merge-logical-coupling", options, true);
+
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            if (cmd.hasOption("i")) {
+                input = cmd.getOptionValue("i");
+            }
+            if (cmd.hasOption("o")) {
+                output = cmd.getOptionValue("o");
+            }
+            if (cmd.hasOption("t")) {
+                threshold = Double.parseDouble(cmd.getOptionValue("t"));
+            }
+        } catch (ParseException ex) {
+            Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
+
+        }
+
+        //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
+        File directory = new File(input + File.separator);
+        File files[] = directory.listFiles();
 
         for (File projectDir : files) //list the projects
         {
@@ -49,7 +85,7 @@ public class ConceptualCoupling {
         for (String projectPath : projectsPath) {
             String projectName = projectPath.substring(projectPath.lastIndexOf(File.separator) + 1, projectPath.length());
 
-            String path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName;
+            String path = output + File.separator + projectName;
             new File(path).mkdir();
             new File(path + File.separator + "Input").mkdir();
 
@@ -58,6 +94,9 @@ public class ConceptualCoupling {
             new File(path + File.separator + "Output" + File.separator + "MethodLevelGranularity").mkdir();
             new File(path + File.separator + "Output" + File.separator + "MethodLevelGranularity" + File.separator + "CorpusPreProcessed").mkdir();
 
+            String sandbox = path + File.separator + "Output" + File.separator + "sandbox";
+            new File(sandbox);
+            
             System.out.println("Extracting Diff ...  " + projectPath);
             generateFilesDiff(projectPath, projectName, sandbox);
 
@@ -108,7 +147,7 @@ public class ConceptualCoupling {
             if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
                 boolean result = extractDiff(projectPath, SHAmergeBase, SHALeft, SHARight, SHAMerge, "Left", projectName, sandbox);
                 if (!result) {
-                    System.out.println(SHAMerge + "does not has java files in both branchs");
+                    System.out.println(SHAMerge + "does not has java files in both branches");
                 }
 
             }
@@ -120,7 +159,7 @@ public class ConceptualCoupling {
         //Getting modified files 
         List<String> changedFilesLeft = new ArrayList<String>();
         List<String> changedFilesRight = new ArrayList<String>();
-        
+
         List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
         List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
 
@@ -166,11 +205,11 @@ public class ConceptualCoupling {
         System.out.println("Extracting right repository AST...");
 
         List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
-        
+
         //Getting modified files AST
         List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
         List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
-        
+
         //Getting chunks tem que armazenar as linhas add e removidas para cada arquivo
         List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
         List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
@@ -215,7 +254,7 @@ public class ConceptualCoupling {
     }
 
     public static void generateMethodFiles(List<ChunkInformation> cis, String projectPath, List<ClassLanguageContructs> AST,
-            String SHAParent, String SHAmergeBase, String sandboxAux, String projectName, String mergeName, 
+            String SHAParent, String SHAmergeBase, String sandboxAux, String projectName, String mergeName,
             String branchName) throws IOException {
 
         FileWriter arquivo = null;
