@@ -1,0 +1,3 @@
+[submodule "merge-nature"]
+	path = merge-nature
+	url = https://github.com/gems-uff/merge-nature
