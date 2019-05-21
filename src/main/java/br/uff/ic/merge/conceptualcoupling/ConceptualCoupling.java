@@ -29,6 +29,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 
 /**
  *
@@ -37,6 +38,10 @@ import org.apache.commons.cli.ParseException;
 public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
+        
+       /* String input = "C:\\Users\\Carlos\\gitProjects";
+        String output = "C:\\Users\\Carlos\\projects";*/
+
         List<String> projectsPath = new ArrayList<>();
 
         final Options options = new Options();
@@ -51,7 +56,7 @@ public class ConceptualCoupling {
             options.addOption("t", true, "threshold from 0.0 to 1.0");
 
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("merge-logical-coupling", options, true);
+            formatter.printHelp("conceptual-coupling", options, true);
 
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -69,7 +74,6 @@ public class ConceptualCoupling {
             Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
 
         }
-
         //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File directory = new File(input + File.separator);
         File files[] = directory.listFiles();
@@ -96,13 +100,13 @@ public class ConceptualCoupling {
 
             String sandbox = path + File.separator + "Output" + File.separator + "sandbox";
             new File(sandbox);
-            
+
             System.out.println("Extracting Diff ...  " + projectPath);
-            generateFilesDiff(projectPath, projectName, sandbox);
+            generateFilesDiff(projectPath, projectName, output, sandbox);
 
             try {
                 System.out.println("Calculating Similarity ... " + projectPath);
-                Process process = Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName);
+                Process process = Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
 
                 //Check if the process is finished
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -120,7 +124,7 @@ public class ConceptualCoupling {
         }
     }
 
-    public static void generateFilesDiff(String projectPath, String projectName, String sandbox) throws IOException {
+    public static void generateFilesDiff(String projectPath, String projectName, String output, String sandbox) throws IOException {
         List<String> mergeRevisions = Git.getMergeRevisions(projectPath);
 
         String project, SHAMerge, SHALeft, SHARight, SHAmergeBase, path;
@@ -145,7 +149,7 @@ public class ConceptualCoupling {
             }
             //Check if is a fast-forward merge
             if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
-                boolean result = extractDiff(projectPath, SHAmergeBase, SHALeft, SHARight, SHAMerge, "Left", projectName, sandbox);
+                boolean result = extractDiff(projectPath, output, SHAmergeBase, SHALeft, SHARight, SHAMerge, "Left", projectName, sandbox);
                 if (!result) {
                     System.out.println(SHAMerge + "does not has java files in both branches");
                 }
@@ -155,7 +159,7 @@ public class ConceptualCoupling {
         }
     }
 
-    public static boolean extractDiff(String projectPath, String SHAmergeBase, String SHALeft, String SHARight, String mergeName, String branchName, String projectName, String sandbox) throws IOException {
+    public static boolean extractDiff(String projectPath, String output, String SHAmergeBase, String SHALeft, String SHARight, String mergeName, String branchName, String projectName, String sandbox) throws IOException {
         //Getting modified files 
         List<String> changedFilesLeft = new ArrayList<String>();
         List<String> changedFilesRight = new ArrayList<String>();
@@ -206,6 +210,19 @@ public class ConceptualCoupling {
 
         List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
 
+//Extracting merge-base AST
+        System.out.println("Cloning merge-base repository...");
+        String repositoryBase = sandbox + File.separator + "base";
+
+        MergeGuider.clone(projectPath, repositoryBase);
+        Git.reset(repositoryBase);
+        Git.clean(repositoryBase);
+        Git.checkout(repositoryBase, SHAmergeBase);
+
+        System.out.println("Extracting merge-base repository AST...");
+
+        List<ClassLanguageContructs> ASTmergeBase = extractAST(repositoryBase);
+
         //Getting modified files AST
         List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
         List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
@@ -214,9 +231,9 @@ public class ConceptualCoupling {
         List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
         List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
 
-        generateMethodFiles(cisL, repositoryLeft, ASTchangedFilesLeft, SHALeft, SHAmergeBase,
+        generateMethodFiles(cisL, repositoryLeft, output, ASTchangedFilesLeft, ASTmergeBase, SHALeft, SHAmergeBase,
                 sandbox, projectName, mergeName, "Left");
-        generateMethodFiles(cisR, repositoryRight, ASTchangedFilesRight, SHARight, SHAmergeBase,
+        generateMethodFiles(cisR, repositoryRight, output, ASTchangedFilesRight, ASTmergeBase, SHARight, SHAmergeBase,
                 sandbox, projectName, mergeName, "Right");
 
         return true;
@@ -253,8 +270,8 @@ public class ConceptualCoupling {
 
     }
 
-    public static void generateMethodFiles(List<ChunkInformation> cis, String projectPath, List<ClassLanguageContructs> AST,
-            String SHAParent, String SHAmergeBase, String sandboxAux, String projectName, String mergeName,
+    public static void generateMethodFiles(List<ChunkInformation> cis, String projectPath, String output, List<ClassLanguageContructs> AST,
+            List<ClassLanguageContructs> ASTmergeBase, String SHAParent, String SHAmergeBase, String sandboxAux, String projectName, String mergeName,
             String branchName) throws IOException {
 
         FileWriter arquivo = null;
@@ -267,15 +284,26 @@ public class ConceptualCoupling {
             //Find method declaration that has some intersection with a method declaration
             List<MyMethodDeclaration> MethodDeclarations = leftCCMethodDeclarations(projectPath, ci, AST);
 
+            List<MyMethodDeclaration> MethodDeclarationsBase = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
+
+            //Union Left and Base methodDeclarations 
+            for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
+                MethodDeclarations.add(MethodDeclarationBase);
+            }
+
             //del equals method   
             for (int i = MethodDeclarations.size() - 1; i > 0; i--) {
-                if (MethodDeclarations.get(i).equals(MethodDeclarations.get(i - 1))) {
+                IMethodBinding methodDeclaration1 = MethodDeclarations.get(i).getMethodDeclaration().resolveBinding();
+                IMethodBinding methodDeclaration2 = MethodDeclarations.get(i-1).getMethodDeclaration().resolveBinding();
+                if (methodDeclaration1.isEqualTo(methodDeclaration2)) {
                     MethodDeclarations.remove(MethodDeclarations.get(i));
                 }
             }
 
             for (MyMethodDeclaration leftMethodDeclaration : MethodDeclarations) {
-                path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
+                // path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
+
+                path = output + File.separator + projectName + File.separator + "Input";
                 path = path + File.separator + mergeName;
                 int begin = leftMethodDeclaration.getLocation().getElementLineBegin();
                 int end = leftMethodDeclaration.getLocation().getElementLineEnd();
