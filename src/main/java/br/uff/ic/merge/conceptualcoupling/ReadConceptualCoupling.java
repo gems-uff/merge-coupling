@@ -6,12 +6,14 @@
 package br.uff.ic.merge.conceptualcoupling;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 
 /**
  *
@@ -67,20 +69,20 @@ public class ReadConceptualCoupling {
             }
         };
 
-        filePath = filePath + File.separator + "Output" + File.separator;
-        String filePathName = filePath + "FinalResultMergeConceptualCoupling.cvs";
+        String filePath_output = filePath + File.separator + "Output" + File.separator;
+        String filePathName = filePath_output + "FinalResultMergeConceptualCoupling.txt";
         try (FileWriter arquivo = new FileWriter(new File(filePathName))) {
-            File directory = new File(filePath);
+            File directory = new File(filePath_output);
             File files[] = directory.listFiles(filter);
             for (File file : files) {
                 FileInputStream stream = new FileInputStream(file);
                 InputStreamReader reader = new InputStreamReader(stream);
                 BufferedReader br = new BufferedReader(reader);
                 Double threshold;
-                Double sum = 0.0;
+                Double intensity = 0.0;
                 String SHAMerge = "";
                 String similarity;
-                int count = 0;
+                int coupling = 0;
 
                 String line = br.readLine();
                 while (line != null) {
@@ -89,13 +91,26 @@ public class ReadConceptualCoupling {
                     line = br.readLine();
                     threshold = Double.parseDouble(similarity);
 
-                    if (threshold >= 0.0) {
-                        count++;
-                        sum = sum + threshold;
+                    if (threshold >= 0.0) {// It calculates the intensity according to the threshold
+                        coupling++; //It calculates the number of couplings according to the threshold
+                        intensity = intensity + threshold; // It calculates the intensity according to the threshold
                     }
-                }
-                if (!(count == 0)) {
-                    arquivo.write(SHAMerge + "," + count + "," + sum/count + "\n");
+                } //chunks is the set of modified methods, that is, number of text files
+                String filePath_input = "";
+                filePath_input = filePath + File.separator + "Input" + File.separator;
+                String filePathName_input = filePath_input + "inputFileNames" + SHAMerge + ".txt";
+                File arquivoLeitura = new File(filePathName_input);
+                long tamanhoArquivo = arquivoLeitura.length();
+                FileInputStream fs = new FileInputStream(filePathName_input);
+                DataInputStream in = new DataInputStream(fs);
+
+                LineNumberReader lineRead = new LineNumberReader(new InputStreamReader(in));
+                lineRead.skip(tamanhoArquivo);
+
+                int chunks = lineRead.getLineNumber();
+                if (!(coupling == 0) && !(chunks == 0)) {
+                    arquivo.write(SHAMerge + "," + chunks + "," + intensity + "," + intensity / chunks + "," + intensity / coupling + "\n");
+
                 }
             }
         }

@@ -38,12 +38,12 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
-        
-       /* String input = "C:\\Users\\Carlos\\gitProjects";
-        String output = "C:\\Users\\Carlos\\projects";*/
+
+        String input = "C:\\Users\\Carlos\\gitProjects";
+        String output = "C:\\Users\\Carlos\\projects";
 
         List<String> projectsPath = new ArrayList<>();
-
+       /* 
         final Options options = new Options();
 
         String input = "";
@@ -73,7 +73,7 @@ public class ConceptualCoupling {
         } catch (ParseException ex) {
             Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
 
-        }
+        }*/
         //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File directory = new File(input + File.separator);
         File files[] = directory.listFiles();
@@ -286,17 +286,23 @@ public class ConceptualCoupling {
 
             List<MyMethodDeclaration> MethodDeclarationsBase = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
 
-            //Union Left and Base methodDeclarations 
-            for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
-                MethodDeclarations.add(MethodDeclarationBase);
+            if (!MethodDeclarationsBase.isEmpty()) {
+                //Union Left and Base methodDeclarations 
+                for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
+                    MethodDeclarations.add(MethodDeclarationBase);
+                }
             }
 
-            //del equals method   
-            for (int i = MethodDeclarations.size() - 1; i > 0; i--) {
-                IMethodBinding methodDeclaration1 = MethodDeclarations.get(i).getMethodDeclaration().resolveBinding();
-                IMethodBinding methodDeclaration2 = MethodDeclarations.get(i-1).getMethodDeclaration().resolveBinding();
-                if (methodDeclaration1.isEqualTo(methodDeclaration2)) {
-                    MethodDeclarations.remove(MethodDeclarations.get(i));
+            if (MethodDeclarations.size() > 1) {
+
+                //del equals method   
+                for (int i = MethodDeclarations.size() - 1; i > 0; i--) {
+                    IMethodBinding methodDeclaration1 = MethodDeclarations.get(i).getMethodDeclaration().resolveBinding();
+                    IMethodBinding methodDeclaration2 = MethodDeclarations.get(i - 1).getMethodDeclaration().resolveBinding();
+
+                    if (methodDeclaration1 != null && methodDeclaration2 != null && methodDeclaration1.isEqualTo(methodDeclaration2)) {
+                        MethodDeclarations.remove(MethodDeclarations.get(i));
+                    }
                 }
             }
 
@@ -308,6 +314,8 @@ public class ConceptualCoupling {
                 int begin = leftMethodDeclaration.getLocation().getElementLineBegin();
                 int end = leftMethodDeclaration.getLocation().getElementLineEnd();
                 String methodName = leftMethodDeclaration.getMethodDeclaration().getName().toString();
+                String classFilePath = ci.getFilePath();
+                String className = classFilePath.substring(classFilePath.lastIndexOf("/") + 1, classFilePath.length() - 5);
                 List<String> result = new ArrayList<>();
 
                 int initialline, line = 0;
@@ -339,21 +347,20 @@ public class ConceptualCoupling {
 
                     }
                 }
-                arquivo = createFile(result, projectName, path, branchName, methodName);
+                arquivo = createFile(result, projectName, path, branchName, methodName, className);
             }
-
         }
     }
 
-    public static FileWriter createFile(List<String> lines, String projectName, String path, String branchName, String methodName) throws IOException {
+    public static FileWriter createFile(List<String> lines, String projectName, String path, String branchName, String methodName, String classNamePath) throws IOException {
 
         String fileName, filePath, packageName, className;
 
         new File(path).mkdir();
-        filePath = path + File.separator + branchName + methodName + ".java";
+        filePath = path + File.separator + branchName + classNamePath + "$" + methodName + ".java";
 
         packageName = "package " + projectName + "\n";
-        className = "class " + branchName + methodName + "\n";
+        className = "class " + branchName + classNamePath + "$" + methodName + "\n";
         FileWriter arquivo = new FileWriter(new File(filePath));
         arquivo.write(packageName);
         arquivo.write(className);
