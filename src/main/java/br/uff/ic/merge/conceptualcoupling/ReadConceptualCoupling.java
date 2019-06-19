@@ -108,10 +108,19 @@ public class ReadConceptualCoupling {
                 lineRead.skip(tamanhoArquivo);
 
                 int chunks = lineRead.getLineNumber();
-                if (!(coupling == 0) && !(chunks == 0)) {
-                    arquivo.write(SHAMerge + "," + chunks + "," + intensity + "," + intensity / chunks + "," + intensity / coupling + "\n");
+                double second = 0;
+                double third = 0;
 
+                if (chunks > 0) {
+                    second = intensity / chunks;
                 }
+
+                if (coupling > 0) {
+                    third = intensity / coupling;
+                }
+
+                arquivo.write(SHAMerge + "," + chunks + "," + intensity + "," + second + "," + third + "\n");
+
             }
         }
 
