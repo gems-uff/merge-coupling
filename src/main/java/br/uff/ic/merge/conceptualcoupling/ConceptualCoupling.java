@@ -39,12 +39,12 @@ public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
 
-        /*String input = "C:\\Users\\Carlos\\gitProjects";
-        String output = "C:\\Users\\Carlos\\projects";*/
+        String input = "C:\\Users\\Carlos\\gitProjects";
+        String output = "C:\\Users\\Carlos\\projects";
 
         List<String> projectsPath = new ArrayList<>();
-        
-        final Options options = new Options();
+
+        /*final Options options = new Options();
 
         String input = "";
         String output = "";
@@ -73,7 +73,7 @@ public class ConceptualCoupling {
         } catch (ParseException ex) {
             Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
 
-        }
+        }*/
         //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File directory = new File(input + File.separator);
         File files[] = directory.listFiles();
@@ -134,6 +134,10 @@ public class ConceptualCoupling {
         SHARight = null;
         SHAmergeBase = null;
 
+        /*SHAMerge = "3b30b7426a143a8ab3b0c0f6d5cb7325f4e6c994";
+        SHALeft = "0dbae3e0daa2970811315995976e93cef2d4df6c";
+        SHARight = "dd836874d16d8bb078e4981c4146873c891b5701";
+        SHAmergeBase = "0c4e494a16141a65f22605a57382a222040f340b";*/
         project = projectPath;
 
         for (String mergeRevision : mergeRevisions) {
@@ -286,15 +290,36 @@ public class ConceptualCoupling {
 
             List<MyMethodDeclaration> MethodDeclarationsBase = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
 
-            if (!MethodDeclarationsBase.isEmpty()) {
-                //Union Left and Base methodDeclarations 
+            List<MyMethodDeclaration> MethodDeclarationsBaseAux = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
+
+            /*if (!MethodDeclarationsBase.isEmpty()) {
+                //Identifica os metodos que foram excluidos e só tem a referencia no base
                 for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
-                    MethodDeclarations.add(MethodDeclarationBase);
+                    for (MyMethodDeclaration MethodDeclaration : MethodDeclarations) {
+
+                        IMethodBinding methodDeclaration1 = MethodDeclaration.getMethodDeclaration().resolveBinding();
+                        IMethodBinding methodDeclarationBase2 = MethodDeclarationBase.getMethodDeclaration().resolveBinding();
+                        if (methodDeclaration1 != null && methodDeclarationBase2 != null && methodDeclarationBase2.isEqualTo(methodDeclaration1)) {
+                            MethodDeclarationsBaseAux.remove(MethodDeclarationBase);
+                        }
+                    }
+                }
+            }*/
+            //exclui os metodos inseridos repetidos
+            if (MethodDeclarationsBaseAux.size() > 1) {
+                //del equals method   
+                for (int i = MethodDeclarationsBaseAux.size() - 1; i > 0; i--) {
+                    IMethodBinding MethodDeclarationsBaseAux1 = MethodDeclarationsBaseAux.get(i).getMethodDeclaration().resolveBinding();
+                    IMethodBinding MethodDeclarationsBaseAux2 = MethodDeclarationsBaseAux.get(i - 1).getMethodDeclaration().resolveBinding();
+
+                    if (MethodDeclarationsBaseAux1 != null && MethodDeclarationsBaseAux2 != null && MethodDeclarationsBaseAux1.isEqualTo(MethodDeclarationsBaseAux2)) {
+                        MethodDeclarationsBaseAux.remove(MethodDeclarationsBaseAux.get(i));
+                    }
                 }
             }
 
+            //exclui os metodos modificados repetidos
             if (MethodDeclarations.size() > 1) {
-
                 //del equals method   
                 for (int i = MethodDeclarations.size() - 1; i > 0; i--) {
                     IMethodBinding methodDeclaration1 = MethodDeclarations.get(i).getMethodDeclaration().resolveBinding();
@@ -305,7 +330,7 @@ public class ConceptualCoupling {
                     }
                 }
             }
-
+            //identifica as linhas dos metodos que foram modificados e inseridos.
             for (MyMethodDeclaration leftMethodDeclaration : MethodDeclarations) {
                 // path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
 
@@ -319,6 +344,7 @@ public class ConceptualCoupling {
                 List<String> result = new ArrayList<>();
 
                 int initialline, line = 0;
+                int count = 0;
 
                 for (String lineDiff : fileDiff) {
 
@@ -332,12 +358,60 @@ public class ConceptualCoupling {
 
                     } else if (lineDiff.startsWith("+ ")) {
                         line++;
-
                         if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
                         }
 
                     } else if (lineDiff.startsWith("- ")) {
+                        count ++;
+                        /*if ((line >= begin) && (line <= end)) {
+                            result.add(lineDiff);
+                        }*/
+                    } else {
+
+                        line++;
+
+                    }
+                }
+                if (!(result.isEmpty())) {
+                    arquivo = createFile(result, projectName, path, branchName, methodName, className);
+                }
+            }
+
+            //identifica as linhas  dos metodos que foram totalmente excluidos, base.
+            for (MyMethodDeclaration leftMethodDeclarationBase : MethodDeclarationsBaseAux) {
+                // path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
+
+                path = output + File.separator + projectName + File.separator + "Input";
+                path = path + File.separator + mergeName;
+                int begin = leftMethodDeclarationBase.getLocation().getElementLineBegin();
+                int end = leftMethodDeclarationBase.getLocation().getElementLineEnd();
+                String methodName = leftMethodDeclarationBase.getMethodDeclaration().getName().toString();
+                String classFilePath = ci.getFilePath();
+                String className = classFilePath.substring(classFilePath.lastIndexOf("/") + 1, classFilePath.length() - 5);
+                List<String> result = new ArrayList<>();
+
+                int initialline, line = 0;
+                int count = 0;
+
+                for (String lineDiff : fileDiff) {
+
+                    if (lineDiff.startsWith("@@")) {
+                        //read the interval line
+                        initialline = initialLine(lineDiff); //initialLine
+                        if (initialline == 0) {//it is a added file
+                            initialline = 1;
+                        }
+                        line = initialline;
+
+                    } else if (lineDiff.startsWith("+ ")) {
+                        count++;
+                        /*if ((line >= begin) && (line <= end)) {
+                            result.add(lineDiff);
+                        }*/
+
+                    } else if (lineDiff.startsWith("- ")) {
+                        line++;
                         if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
                         }
@@ -347,8 +421,13 @@ public class ConceptualCoupling {
 
                     }
                 }
-                arquivo = createFile(result, projectName, path, branchName, methodName, className);
+                if (!(result.isEmpty())) {
+                    //arquivo = createFile(result, projectName, path, branchName, methodName, className);
+
+                    arquivo = createFileBase(result, projectName, path, branchName, methodName, className);
+                }
             }
+
         }
     }
 
@@ -374,11 +453,48 @@ public class ConceptualCoupling {
         return arquivo;
     }
 
+    public static FileWriter createFileBase(List<String> lines, String projectName, String path, String branchName, String methodName, String classNamePath) throws IOException {
+
+        FileWriter arquivo = null;
+        String fileName, filePath, packageName, className;
+        
+        //new File(path).mkdir();
+        filePath = path + File.separator + branchName + classNamePath + "$" + methodName + ".java";
+        
+        //packageName = "package " + projectName + "\n";
+        //className = "class " + branchName + classNamePath + "$" + methodName + "\n";
+
+        File file = new File(filePath); //abre o arquivo
+
+        if (file.exists()) {
+            //BufferedReader arquivo = new BufferedReader(new FileReader(nome));
+            arquivo = new FileWriter(filePath, true); //new File
+
+            for (String line : lines) {
+                arquivo.append(line + "\n");
+            }
+            arquivo.close();
+        } else if (!(file.exists())) {
+            arquivo = createFile(lines, projectName, path, branchName, methodName, classNamePath);
+
+        }
+        return arquivo;
+    }
+
     public static int finalLine(String line) {
 
         String[] intervals = line.split("\\+");
 
         String[] limits = intervals[1].split(",");
+
+        return Integer.parseInt(limits[0].replace(" ", ""));
+    }
+
+    private static int initialLine(String line) {
+
+        line = line.replaceFirst("@@ -", "");
+        String[] intervals = line.split("\\+");
+        String[] limits = intervals[0].split(",");
 
         return Integer.parseInt(limits[0].replace(" ", ""));
     }
