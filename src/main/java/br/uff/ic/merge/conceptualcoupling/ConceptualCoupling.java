@@ -39,12 +39,12 @@ public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
 
-        String input = "C:\\Users\\Carlos\\gitProjects";
-        String output = "C:\\Users\\Carlos\\projects";
+        /*String input = "C:\\Users\\Carlos\\gitProjects";
+        String output = "C:\\Users\\Carlos\\projects";*/
 
         List<String> projectsPath = new ArrayList<>();
 
-        /*final Options options = new Options();
+        final Options options = new Options();
 
         String input = "";
         String output = "";
@@ -73,7 +73,7 @@ public class ConceptualCoupling {
         } catch (ParseException ex) {
             Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
 
-        }*/
+        }
         //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File directory = new File(input + File.separator);
         File files[] = directory.listFiles();
