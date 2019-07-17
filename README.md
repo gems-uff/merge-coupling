@@ -1,18 +1,24 @@
 # merge-coupling
 
 # About
-This project is an adaptation of the SemanticSimilarityJava tool that was developed by Dr. Nemitari Ajienka and it aims to identify the conceptual coupling across branches of Git projects.
+This repository has an adaptation of the SemanticSimilarityJava tool that was developed by Dr. Nemitari Ajienka and it aims to identify the conceptual coupling across branches of Git projects. It has an adaptation of merge-nature tool that was developed by Gleiph Giotto and an adaptation of TIPMerge tool that was developed by Catarina Costa.
 
 # Team
 Cristiane da Silva Rodrigues Pereira (UFF, Brazil)
 
 Leonardo Gresta Paulino Murta (UFF, Brazil)
 
+Gleiph Ghiotto Lima de Menezes (UFJF, Brazil)
+
 # Usage
-1. Create the gitProjects and projects folders in your home directory;
-2. Clone the Git project and save it to the gitProjects folder;
-3. The stopWords.txt file must be in the user's home directory;
-4. In your IDE (e.g. NetBeans), open the ConceptualCoupling.java class and execute;
-5. This project will identify the merges, build the corpus for each of them (eliminate common key words, split and stem class and method identifiers) and compute their semantic similarity using the Vector Space Model (VSM) technique;
-6. The results will be stored in files with the .txt extension to the projects\outputs folder;
-7. The FinalResultMergeConceptualCoupling.txt file has the number of couplings and the average of the similarity values of each merge.
+
+1. To extract the conceptual coupling:
+
+    1.1 - Put the files SemanticSimilarityJava.jar and StopWords.txt in the user home directory.
+     
+     1.2 - Execute java -jar ConceptualCoupling-1.0-SNAPSHOT-jar-with-dependencies.jar -i "project-input" -o "output-result"
+  
+2. To extract the structural coupling:
+
+3 . To extract the logical coupling:
+
