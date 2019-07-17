@@ -39,7 +39,7 @@ public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
 
-        /*String input = "C:\\Users\\Carlos\\gitProjects";
+       /*String input = "C:\\Users\\Carlos\\gitProjects";
         String output = "C:\\Users\\Carlos\\projects";*/
 
         List<String> projectsPath = new ArrayList<>();
@@ -48,7 +48,7 @@ public class ConceptualCoupling {
 
         String input = "";
         String output = "";
-        Double threshold = 0.0;
+        //Double threshold = 0.0;
         
         try {
             options.addOption("i", true, "input directory");
@@ -67,14 +67,13 @@ public class ConceptualCoupling {
             if (cmd.hasOption("o")) {
                 output = cmd.getOptionValue("o");
             }
-            if (cmd.hasOption("t")) {
+            /*if (cmd.hasOption("t")) {
                 threshold = Double.parseDouble(cmd.getOptionValue("t"));
-            }
+            }*/
         } catch (ParseException ex) {
             Logger.getLogger(ConceptualCoupling.class.getName()).log(Level.SEVERE, null, ex);
 
         }
-        //File directory = new File(System.getProperty("user.home") + File.separator + "gitProjects" + File.separator);
         File directory = new File(input + File.separator);
         File files[] = directory.listFiles();
 
@@ -106,7 +105,7 @@ public class ConceptualCoupling {
 
             try {
                 System.out.println("Calculating Similarity ... " + projectPath);
-                Process process = Runtime.getRuntime().exec("java -jar SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
+                Process process = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + File.separator +"SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
 
                 //Check if the process is finished
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -133,11 +132,7 @@ public class ConceptualCoupling {
         SHALeft = null;
         SHARight = null;
         SHAmergeBase = null;
-
-        /*SHAMerge = "3b30b7426a143a8ab3b0c0f6d5cb7325f4e6c994";
-        SHALeft = "0dbae3e0daa2970811315995976e93cef2d4df6c";
-        SHARight = "dd836874d16d8bb078e4981c4146873c891b5701";
-        SHAmergeBase = "0c4e494a16141a65f22605a57382a222040f340b";*/
+        
         project = projectPath;
 
         for (String mergeRevision : mergeRevisions) {
@@ -214,7 +209,7 @@ public class ConceptualCoupling {
 
         List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
 
-//Extracting merge-base AST
+        //Extracting merge-base AST
         System.out.println("Cloning merge-base repository...");
         String repositoryBase = sandbox + File.separator + "base";
 
@@ -292,19 +287,6 @@ public class ConceptualCoupling {
 
             List<MyMethodDeclaration> MethodDeclarationsBaseAux = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
 
-            /*if (!MethodDeclarationsBase.isEmpty()) {
-                //Identifica os metodos que foram excluidos e só tem a referencia no base
-                for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
-                    for (MyMethodDeclaration MethodDeclaration : MethodDeclarations) {
-
-                        IMethodBinding methodDeclaration1 = MethodDeclaration.getMethodDeclaration().resolveBinding();
-                        IMethodBinding methodDeclarationBase2 = MethodDeclarationBase.getMethodDeclaration().resolveBinding();
-                        if (methodDeclaration1 != null && methodDeclarationBase2 != null && methodDeclarationBase2.isEqualTo(methodDeclaration1)) {
-                            MethodDeclarationsBaseAux.remove(MethodDeclarationBase);
-                        }
-                    }
-                }
-            }*/
             //exclui os metodos inseridos repetidos
             if (MethodDeclarationsBaseAux.size() > 1) {
                 //del equals method   
@@ -332,8 +314,6 @@ public class ConceptualCoupling {
             }
             //identifica as linhas dos metodos que foram modificados e inseridos.
             for (MyMethodDeclaration leftMethodDeclaration : MethodDeclarations) {
-                // path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
-
                 path = output + File.separator + projectName + File.separator + "Input";
                 path = path + File.separator + mergeName;
                 int begin = leftMethodDeclaration.getLocation().getElementLineBegin();
@@ -380,7 +360,6 @@ public class ConceptualCoupling {
 
             //identifica as linhas  dos metodos que foram totalmente excluidos, base.
             for (MyMethodDeclaration leftMethodDeclarationBase : MethodDeclarationsBaseAux) {
-                // path = System.getProperty("user.home") + File.separator + "projects" + File.separator + projectName + File.separator + "Input";
 
                 path = output + File.separator + projectName + File.separator + "Input";
                 path = path + File.separator + mergeName;
@@ -457,13 +436,8 @@ public class ConceptualCoupling {
 
         FileWriter arquivo = null;
         String fileName, filePath, packageName, className;
-        
-        //new File(path).mkdir();
-        filePath = path + File.separator + branchName + classNamePath + "$" + methodName + ".java";
-        
-        //packageName = "package " + projectName + "\n";
-        //className = "class " + branchName + classNamePath + "$" + methodName + "\n";
 
+        filePath = path + File.separator + branchName + classNamePath + "$" + methodName + ".java";
         File file = new File(filePath); //abre o arquivo
 
         if (file.exists()) {

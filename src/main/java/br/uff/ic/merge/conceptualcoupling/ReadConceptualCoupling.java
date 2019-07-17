@@ -79,7 +79,7 @@ public class ReadConceptualCoupling {
                 InputStreamReader reader = new InputStreamReader(stream);
                 BufferedReader br = new BufferedReader(reader);
                 Double threshold;
-                Double intensity = 0.0;
+                Double total_intensity = 0.0;
                 String SHAMerge = "";
                 String similarity;
                 int coupling = 0;
@@ -93,7 +93,7 @@ public class ReadConceptualCoupling {
 
                     if (threshold >= 0.0) {// It calculates the intensity according to the threshold
                         coupling++; //It calculates the number of couplings according to the threshold
-                        intensity = intensity + threshold; // It calculates the intensity according to the threshold
+                        total_intensity = total_intensity + threshold; // It calculates the intensity according to the threshold
                     }
                 } //chunks is the set of modified methods, that is, number of text files
                 String filePath_input = "";
@@ -108,18 +108,18 @@ public class ReadConceptualCoupling {
                 lineRead.skip(tamanhoArquivo);
 
                 int chunks = lineRead.getLineNumber();
-                double second = 0;
-                double third = 0;
+                double normalized_coupling = 0;
+               // double third = 0;
 
                 if (chunks > 0) {
-                    second = intensity / chunks;
+                    normalized_coupling = total_intensity / chunks;
                 }
 
-                if (coupling > 0) {
-                    third = intensity / coupling;
-                }
+                /*if (coupling > 0) {
+                    third = total_intensity / coupling;
+                }*/
 
-                arquivo.write(SHAMerge + "," + chunks + "," + intensity + "," + second + "," + third + "\n");
+                arquivo.write(SHAMerge + "," + chunks + "," + total_intensity + "," + normalized_coupling + "\n");
 
             }
         }
