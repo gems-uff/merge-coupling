@@ -2,27 +2,18 @@ package br.uff.ic.merge.logicalcoupling;
 
 import domain.Dominoes;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -30,13 +21,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
 
 import RepositoryImporter.CommitNode;
 import RepositoryImporter.RepositoryNode;
 import br.uff.ic.coupling.ChunkInformation;
-import br.uff.ic.coupling.CouplingChunks;
 import br.uff.ic.gems.resources.operation.Operation;
 import br.uff.ic.mergeguider.MergeGuider;
 import br.uff.ic.mergeguider.javaparser.ClassLanguageContructs;
@@ -206,11 +194,11 @@ public class CoverageCompare {
 
 										float intensityL = 0;
 										float intensityR = 0;
-										float intensityMerge = 0;
-										int couplingL = 0;
-										int couplingR = 0;
-										float second = 0;
-										float third = 0;
+										float total_coupling = 0;
+										float couplingL = 0;
+										float couplingR = 0;
+										float normalized_coupling = 0;
+										//float third = 0;
 
 										if (!(dependencies.get(0).getDependencyMap().isEmpty())){
 											intensityL = dependencies.get(0).getValues();
@@ -222,20 +210,20 @@ public class CoverageCompare {
 											couplingR =  dependencies.get(1).getCoupling();
 										}
 
-										intensityMerge = intensityL + intensityR;
-										int chunks = editedMethodLeft.size() + editedMethodRight.size();
-										int couplings  = couplingL + couplingR;
+										total_coupling = (intensityL + intensityR)/2;
+										float chunks = editedMethodLeft.size() + editedMethodRight.size();
+										float couplings  = couplingL + couplingR;
 
 										if (chunks > 0)
 										{
-											second = intensityMerge/chunks;
+											normalized_coupling = total_coupling/chunks;
 										}
 										
-										if (couplings > 0) {
+										/*if (couplings > 0) {
 											third = intensityMerge/couplings;
-										}
+										}*/
 
-										file.write(SHAMerge + "," + intensityL + "," + intensityR + "," + intensityMerge + "," + second + "," + third + "\n");
+										file.write(SHAMerge + ", "  + chunks + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
 									}
 								} else {
 									System.out.println(SHAMerge + "does not has java files in both branches");
@@ -477,7 +465,7 @@ public class CoverageCompare {
 
 			//Find method declaration that has some intersection with a method declaration
 			List<MyMethodDeclaration> MethodDeclarations = leftCCMethodDeclarations(projectPath, ci, AST); 
-			List<MyMethodDeclaration> MethodDeclarationsBase = leftCCMethodDeclarations(projectPath, ci, ASTmergeBase);
+			List<MyMethodDeclaration> MethodDeclarationsBase = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
 
 			//Union Left and Base methodDeclarations 
 			for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
@@ -549,6 +537,41 @@ public class CoverageCompare {
 
 		return result;
 	}
+
+	public static List<MyMethodDeclaration> leftBaseCCMethodDeclarations(String projectPath,
+            ChunkInformation ci, List<ClassLanguageContructs> ASTmergeBase) {
+
+        List<MyMethodDeclaration> result = new ArrayList<>();
+        List<Operation> operationsBase = new ArrayList<>();
+
+        String relativePath = null;
+
+        if (ci.isRenamed() && ci.getRelativePathLeftBase() != null) {
+            relativePath = ci.getRelativePathLeftBase();
+        } else {
+            relativePath = ci.getFilePath().replace(projectPath, "");
+        }
+
+        for (ClassLanguageContructs AST : ASTmergeBase) {
+
+            if (containsPath(AST.getPath(), relativePath)) {
+
+                List<MyMethodDeclaration> methodDeclarations = AST.getMethodDeclarations();
+
+                for (MyMethodDeclaration methodDeclaration : methodDeclarations) {
+                    operationsBase = ci.getOperationsBase();
+                    for (Operation operation : operationsBase) {
+                        int line = operation.getLine();
+                        if (leftHasIntersection(methodDeclaration, ci, line)) {
+                            result.add(methodDeclaration);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
 
 	public static boolean leftHasIntersection(MyMethodDeclaration methodDeclaration, ChunkInformation ci, int line) {
 
