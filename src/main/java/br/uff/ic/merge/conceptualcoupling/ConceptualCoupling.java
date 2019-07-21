@@ -165,7 +165,7 @@ public class ConceptualCoupling {
         List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
         List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
 
-        if (!changedFilesLeftAux.isEmpty()) {
+        if (!(changedFilesLeftAux == null)) {
             //to remove files that have extension other than java
             for (int i = 0; i < changedFilesLeftAux.size(); i++) {
                 if (changedFilesLeftAux.get(i).endsWith("java")) {
@@ -173,7 +173,7 @@ public class ConceptualCoupling {
                 }
             }
         }
-        if (!changedFilesRightAux.isEmpty()) {
+        if (!(changedFilesRightAux == null)) {
             for (int i = 0; i < changedFilesRightAux.size(); i++) {
                 if (changedFilesRightAux.get(i).endsWith("java")) {
                     changedFilesRight.add(changedFilesRightAux.get(i));
