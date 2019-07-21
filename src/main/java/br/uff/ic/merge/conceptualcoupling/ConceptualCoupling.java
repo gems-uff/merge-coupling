@@ -39,9 +39,8 @@ public class ConceptualCoupling {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
 
-       /*String input = "C:\\Users\\Carlos\\gitProjects";
+        /*String input = "C:\\Users\\Carlos\\gitProjects";
         String output = "C:\\Users\\Carlos\\projects";*/
-
         List<String> projectsPath = new ArrayList<>();
 
         final Options options = new Options();
@@ -49,7 +48,7 @@ public class ConceptualCoupling {
         String input = "";
         String output = "";
         //Double threshold = 0.0;
-        
+
         try {
             options.addOption("i", true, "input directory");
             options.addOption("o", true, "output directory");
@@ -105,7 +104,7 @@ public class ConceptualCoupling {
 
             try {
                 System.out.println("Calculating Similarity ... " + projectPath);
-                Process process = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + File.separator +"SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
+                Process process = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + File.separator + "SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
 
                 //Check if the process is finished
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -132,7 +131,7 @@ public class ConceptualCoupling {
         SHALeft = null;
         SHARight = null;
         SHAmergeBase = null;
-        
+
         project = projectPath;
 
         for (String mergeRevision : mergeRevisions) {
@@ -166,15 +165,19 @@ public class ConceptualCoupling {
         List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
         List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
 
-        //to remove files that have extension other than java
-        for (int i = 0; i < changedFilesLeftAux.size(); i++) {
-            if (changedFilesLeftAux.get(i).endsWith("java")) {
-                changedFilesLeft.add(changedFilesLeftAux.get(i));
+        if (!changedFilesLeftAux.isEmpty()) {
+            //to remove files that have extension other than java
+            for (int i = 0; i < changedFilesLeftAux.size(); i++) {
+                if (changedFilesLeftAux.get(i).endsWith("java")) {
+                    changedFilesLeft.add(changedFilesLeftAux.get(i));
+                }
             }
         }
-        for (int i = 0; i < changedFilesRightAux.size(); i++) {
-            if (changedFilesRightAux.get(i).endsWith("java")) {
-                changedFilesRight.add(changedFilesRightAux.get(i));
+        if (!changedFilesRightAux.isEmpty()) {
+            for (int i = 0; i < changedFilesRightAux.size(); i++) {
+                if (changedFilesRightAux.get(i).endsWith("java")) {
+                    changedFilesRight.add(changedFilesRightAux.get(i));
+                }
             }
         }
         //If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
@@ -343,7 +346,7 @@ public class ConceptualCoupling {
                         }
 
                     } else if (lineDiff.startsWith("- ")) {
-                        count ++;
+                        count++;
                         /*if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
                         }*/
