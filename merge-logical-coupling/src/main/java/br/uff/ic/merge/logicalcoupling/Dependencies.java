@@ -88,7 +88,8 @@ package br.uff.ic.merge.logicalcoupling;
 	                    if ((i != j) && (indexOf > -1)) {
 	                        for (Cell c : cells) {
 	                        	
-	                            if ((c.value >= threshold) && (c.value < (threshold + 0.1)) && (c.row == j) && (c.col == i)) {
+	                            //if ((c.value >= threshold) && (c.value < (threshold + 0.1)) && (c.row == j) && (c.col == i)) {
+	                        	 if ((c.value >= threshold)){
                             		intensity = intensity + c.value;
                                 	coupling ++;
 	                                methodDependencies.add(consequentMethods.get(indexOf));

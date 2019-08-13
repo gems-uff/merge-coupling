@@ -39,9 +39,9 @@ import br.uff.ic.mergeguider.languageConstructs.MyMethodDeclaration;
 public class CoverageCompare {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, ParseException {
-		/*String input = "C:\\Users\\Carlos\\clones";
-		String outputPathName = "C:\\Users\\Carlos\\logical_result";
-		Double threshold = 0.3;*/
+		/*String input = "C:\\Users\\Carlos\\gitProjects";
+		String outputPathName = "C:\\Users\\Carlos\\projects";
+		Double threshold = 0.0;*/
 
 		String input = "";
 		String outputPathName = "";
@@ -67,9 +67,9 @@ public class CoverageCompare {
 			if (cmd.hasOption("o")){
 				outputPathName  = cmd.getOptionValue("o");
 			}
-			if (cmd.hasOption("t")){
+			/*if (cmd.hasOption("t")){
 				threshold  = Double.parseDouble(cmd.getOptionValue("t"));
-			}
+			}*/
 		}catch (ParseException ex) {
 			Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
 
@@ -103,130 +103,134 @@ public class CoverageCompare {
 							SHARight = parents2.get(1);
 							SHAmergeBase = getMergeBase(projectPath, SHALeft, SHARight);
 							// Check if is a fast-forward merge
-							if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
 
-								//Getting modified files 
-								List<String> changedFilesLeft = new ArrayList<String>();
-								List<String> changedFilesRight = new ArrayList<String>();
+							if (!(SHAmergeBase == null)) {
+								if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
 
-								List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
-								List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
+									//Getting modified files 
+									List<String> changedFilesLeft = new ArrayList<String>();
+									List<String> changedFilesRight = new ArrayList<String>();
 
-								//to remove files that have extension other than java
-								for (int i = 0; i < changedFilesLeftAux.size(); i++) {
-									if (changedFilesLeftAux.get(i).endsWith("java")) {
-										changedFilesLeft.add(changedFilesLeftAux.get(i));
+									List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
+									List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
+
+									//to remove files that have extension other than java
+									for (int i = 0; i < changedFilesLeftAux.size(); i++) {
+										if (changedFilesLeftAux.get(i).endsWith("java")) {
+											changedFilesLeft.add(changedFilesLeftAux.get(i));
+										}
 									}
-								}
-								for (int i = 0; i < changedFilesRightAux.size(); i++) {
-									if (changedFilesRightAux.get(i).endsWith("java")) {
-										changedFilesRight.add(changedFilesRightAux.get(i));
+									for (int i = 0; i < changedFilesRightAux.size(); i++) {
+										if (changedFilesRightAux.get(i).endsWith("java")) {
+											changedFilesRight.add(changedFilesRightAux.get(i));
+										}
 									}
-								}
-								//If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
-								if (!(changedFilesLeft.isEmpty()) || !(changedFilesRight.isEmpty())) {
-									//Extracting Left AST
-									System.out.println(SHAMerge);
-									System.out.println("Cloning left repository...");
-									String repositoryLeft = sandbox + File.separator + "left";
+									//If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
+									if (!(changedFilesLeft.isEmpty()) || !(changedFilesRight.isEmpty())) {
+										//Extracting Left AST
+										System.out.println(SHAMerge);
+										System.out.println("Cloning left repository...");
+										String repositoryLeft = sandbox + File.separator + "left";
 
-									MergeGuider.clone(projectPath, repositoryLeft);
-									Git.reset(repositoryLeft);
-									Git.clean(repositoryLeft);
-									Git.checkout(repositoryLeft, SHALeft);
+										MergeGuider.clone(projectPath, repositoryLeft);
+										Git.reset(repositoryLeft);
+										Git.clean(repositoryLeft);
+										Git.checkout(repositoryLeft, SHALeft);
 
-									System.out.println("Extracting left repository AST...");
+										System.out.println("Extracting left repository AST...");
 
-									List<ClassLanguageContructs> ASTLeft = extractAST(repositoryLeft);
+										List<ClassLanguageContructs> ASTLeft = extractAST(repositoryLeft);
 
-									//Extracting Right AST
-									System.out.println("Cloning right repository...");
+										//Extracting Right AST
+										System.out.println("Cloning right repository...");
 
-									String repositoryRight = sandbox + File.separator + "right";
+										String repositoryRight = sandbox + File.separator + "right";
 
-									MergeGuider.clone(projectPath, repositoryRight);
-									Git.reset(repositoryRight);
-									Git.clean(repositoryRight);
-									Git.checkout(repositoryRight, SHARight);
+										MergeGuider.clone(projectPath, repositoryRight);
+										Git.reset(repositoryRight);
+										Git.clean(repositoryRight);
+										Git.checkout(repositoryRight, SHARight);
 
-									System.out.println("Extracting right repository AST...");
+										System.out.println("Extracting right repository AST...");
 
-									List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
+										List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
 
-									//Extracting merge-base AST
-									System.out.println("Cloning merge-base repository...");
-									String repositoryBase = sandbox + File.separator + "base";
+										//Extracting merge-base AST
+										System.out.println("Cloning merge-base repository...");
+										String repositoryBase = sandbox + File.separator + "base";
 
-									MergeGuider.clone(projectPath, repositoryBase);
-									Git.reset(repositoryBase);
-									Git.clean(repositoryBase);
-									Git.checkout(repositoryBase, SHAmergeBase);
+										MergeGuider.clone(projectPath, repositoryBase);
+										Git.reset(repositoryBase);
+										Git.clean(repositoryBase);
+										Git.checkout(repositoryBase, SHAmergeBase);
 
-									System.out.println("Extracting merge-base repository AST...");
+										System.out.println("Extracting merge-base repository AST...");
 
-									List<ClassLanguageContructs> ASTmergeBase = extractAST(repositoryBase);
+										List<ClassLanguageContructs> ASTmergeBase = extractAST(repositoryBase);
 
-									//Getting modified files AST
-									List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
-									List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
+										//Getting modified files AST
+										List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
+										List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
 
-									//Getting chunks tem que armazenar as linhas add e removidas para cada arquivo
-									List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
-									List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
+										//Getting chunks tem que armazenar as linhas add e removidas para cada arquivo
+										List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
+										List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
 
-									List<EditedMethod> editedMethodLeft = generateEditedMethod(cisL, repositoryLeft, ASTchangedFilesLeft, ASTmergeBase);
-									List<EditedMethod> editedMethodRight = generateEditedMethod(cisR, repositoryRight, ASTchangedFilesRight, ASTmergeBase);
+										List<EditedMethod> editedMethodLeft = generateEditedMethod(cisL, repositoryLeft, ASTchangedFilesLeft, ASTmergeBase);
+										List<EditedMethod> editedMethodRight = generateEditedMethod(cisR, repositoryRight, ASTchangedFilesRight, ASTmergeBase);
 
-									MergeMethods mergeMethods = getMergeMethods(project, SHAMerge, editedMethodLeft, editedMethodRight);
+										MergeMethods mergeMethods = getMergeMethods(project, SHAMerge, editedMethodLeft, editedMethodRight);
 
-									/*List<Map<EditedMethod, Set<EditedMethod>>> dependencies = getMethodsDependencies(
+										/*List<Map<EditedMethod, Set<EditedMethod>>> dependencies = getMethodsDependencies(
 											project, mergeMethods, firstHash, threshold, _database);*/
-									List<Dependency_Information> dependencies = getMethodsDependencies(
-											project, mergeMethods, firstHash, threshold, _database);
+										List<Dependency_Information> dependencies = getMethodsDependencies(
+												project, mergeMethods, firstHash, threshold, _database);
 
-									boolean hasFilesDependencies = false;
+										boolean hasFilesDependencies = false;
 
-									if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
-										hasFilesDependencies = true;
-									}
-
-									if (hasFilesDependencies) {
-
-										float intensityL = 0;
-										float intensityR = 0;
-										float total_coupling = 0;
-										float couplingL = 0;
-										float couplingR = 0;
-										float normalized_coupling = 0;
-										//float third = 0;
-
-										if (!(dependencies.get(0).getDependencyMap().isEmpty())){
-											intensityL = dependencies.get(0).getValues();
-											couplingL =  dependencies.get(0).getCoupling();
+										if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
+											hasFilesDependencies = true;
 										}
 
-										if (!(dependencies.get(1).getDependencyMap().isEmpty())) {
-											intensityR = dependencies.get(1).getValues();
-											couplingR =  dependencies.get(1).getCoupling();
-										}
+										if (hasFilesDependencies) {
 
-										total_coupling = (intensityL + intensityR)/2;
-										float chunks = editedMethodLeft.size() + editedMethodRight.size();
-										float couplings  = couplingL + couplingR;
+											float intensityL = 0;
+											float intensityR = 0;
+											float total_coupling = 0;
+											float couplingL = 0;
+											float couplingR = 0;
+											float normalized_coupling = 0;
+											//float third = 0;
 
-										if (chunks > 0)
-										{
-											normalized_coupling = total_coupling/chunks;
-										}
-										
-										/*if (couplings > 0) {
+											if (!(dependencies.get(0).getDependencyMap().isEmpty())){
+												intensityL = dependencies.get(0).getValues();
+												couplingL =  dependencies.get(0).getCoupling();
+											}
+
+											if (!(dependencies.get(1).getDependencyMap().isEmpty())) {
+												intensityR = dependencies.get(1).getValues();
+												couplingR =  dependencies.get(1).getCoupling();
+											}
+
+											total_coupling = (intensityL + intensityR)/2;
+											float chunks = editedMethodLeft.size() + editedMethodRight.size();
+											float couplings  = couplingL + couplingR;
+
+											if (chunks > 0)
+											{
+												normalized_coupling = total_coupling/chunks;
+											}
+
+											/*if (couplings > 0) {
 											third = intensityMerge/couplings;
 										}*/
 
-										file.write(SHAMerge + ", "  + chunks + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
+											file.write(SHAMerge + ", "  + chunks + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
+										}
+									} else {
+										System.out.println(SHAMerge + "does not has java files in both branches");
+										file.write(SHAMerge + "0.0" + "\n");
 									}
-								} else {
-									System.out.println(SHAMerge + "does not has java files in both branches");
 								}
 							}
 						}
@@ -467,7 +471,35 @@ public class CoverageCompare {
 			List<MyMethodDeclaration> MethodDeclarations = leftCCMethodDeclarations(projectPath, ci, AST); 
 			List<MyMethodDeclaration> MethodDeclarationsBase = leftBaseCCMethodDeclarations(projectPath, ci, ASTmergeBase);
 
-			//Union Left and Base methodDeclarations 
+			/*
+			 * //exclui os metodos inseridos repetidos
+            if (MethodDeclarationsBaseAux.size() > 1) {
+                //del equals method   
+                for (int i = MethodDeclarationsBaseAux.size() - 1; i > 0; i--) {
+                    IMethodBinding MethodDeclarationsBaseAux1 = MethodDeclarationsBaseAux.get(i).getMethodDeclaration().resolveBinding();
+                    IMethodBinding MethodDeclarationsBaseAux2 = MethodDeclarationsBaseAux.get(i - 1).getMethodDeclaration().resolveBinding();
+
+                    if (MethodDeclarationsBaseAux1 != null && MethodDeclarationsBaseAux2 != null && MethodDeclarationsBaseAux1.isEqualTo(MethodDeclarationsBaseAux2)) {
+                        MethodDeclarationsBaseAux.remove(MethodDeclarationsBaseAux.get(i));
+                    }
+                }
+            }
+
+            //exclui os metodos modificados repetidos
+            if (MethodDeclarations.size() > 1) {
+                //del equals method   
+                for (int i = MethodDeclarations.size() - 1; i > 0; i--) {
+                    IMethodBinding methodDeclaration1 = MethodDeclarations.get(i).getMethodDeclaration().resolveBinding();
+                    IMethodBinding methodDeclaration2 = MethodDeclarations.get(i - 1).getMethodDeclaration().resolveBinding();
+
+                    if (methodDeclaration1 != null && methodDeclaration2 != null && methodDeclaration1.isEqualTo(methodDeclaration2)) {
+                        MethodDeclarations.remove(MethodDeclarations.get(i));
+                    }
+                }
+            }
+			 */
+
+			//Union Left and Base methodDeclarations TÀ ERRADO
 			for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
 				MethodDeclarations.add(MethodDeclarationBase);
 			}
@@ -539,39 +571,39 @@ public class CoverageCompare {
 	}
 
 	public static List<MyMethodDeclaration> leftBaseCCMethodDeclarations(String projectPath,
-            ChunkInformation ci, List<ClassLanguageContructs> ASTmergeBase) {
+			ChunkInformation ci, List<ClassLanguageContructs> ASTmergeBase) {
 
-        List<MyMethodDeclaration> result = new ArrayList<>();
-        List<Operation> operationsBase = new ArrayList<>();
+		List<MyMethodDeclaration> result = new ArrayList<>();
+		List<Operation> operationsBase = new ArrayList<>();
 
-        String relativePath = null;
+		String relativePath = null;
 
-        if (ci.isRenamed() && ci.getRelativePathLeftBase() != null) {
-            relativePath = ci.getRelativePathLeftBase();
-        } else {
-            relativePath = ci.getFilePath().replace(projectPath, "");
-        }
+		if (ci.isRenamed() && ci.getRelativePathLeftBase() != null) {
+			relativePath = ci.getRelativePathLeftBase();
+		} else {
+			relativePath = ci.getFilePath().replace(projectPath, "");
+		}
 
-        for (ClassLanguageContructs AST : ASTmergeBase) {
+		for (ClassLanguageContructs AST : ASTmergeBase) {
 
-            if (containsPath(AST.getPath(), relativePath)) {
+			if (containsPath(AST.getPath(), relativePath)) {
 
-                List<MyMethodDeclaration> methodDeclarations = AST.getMethodDeclarations();
+				List<MyMethodDeclaration> methodDeclarations = AST.getMethodDeclarations();
 
-                for (MyMethodDeclaration methodDeclaration : methodDeclarations) {
-                    operationsBase = ci.getOperationsBase();
-                    for (Operation operation : operationsBase) {
-                        int line = operation.getLine();
-                        if (leftHasIntersection(methodDeclaration, ci, line)) {
-                            result.add(methodDeclaration);
-                        }
-                    }
-                }
-            }
-        }
+				for (MyMethodDeclaration methodDeclaration : methodDeclarations) {
+					operationsBase = ci.getOperationsBase();
+					for (Operation operation : operationsBase) {
+						int line = operation.getLine();
+						if (leftHasIntersection(methodDeclaration, ci, line)) {
+							result.add(methodDeclaration);
+						}
+					}
+				}
+			}
+		}
 
-        return result;
-    }
+		return result;
+	}
 
 	public static boolean leftHasIntersection(MyMethodDeclaration methodDeclaration, ChunkInformation ci, int line) {
 
