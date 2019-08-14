@@ -104,8 +104,9 @@ public class ConceptualCoupling {
 
             try {
                 System.out.println("Calculating Similarity ... " + projectPath);
-                Process process = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + File.separator + "SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
+                Process process = Runtime.getRuntime().exec("java -jar " + File.separator + System.getProperty("user.home") + File.separator + "SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
 
+                //Process process = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + File.separator + "SemanticSimilarityJava.jar -p " + projectName + " -i " + input + " -o " + output);
                 //Check if the process is finished
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 while ((reader.readLine()) != null) {
@@ -134,27 +135,39 @@ public class ConceptualCoupling {
 
         project = projectPath;
 
+        String pathFile = output + File.separator + projectName;
+
+        String finalFilePath = pathFile + File.separator + "Output" + File.separator;
+        String filePathName = finalFilePath + "EspecialMerge.txt";
+        FileWriter arquivo = new FileWriter(new File(filePathName));
+
         for (String mergeRevision : mergeRevisions) {
 
             SHAMerge = mergeRevision;
 
+            //SHAMerge = "1f67ba86730d086921cddd38dcc10616920fd7b6";
             List<String> parents = Git.getParents(projectPath, mergeRevision);
+            //List<String> parents = Git.getParents(projectPath, SHAMerge);
 
             if (parents.size() == 2) {
+
                 SHALeft = parents.get(0);
                 SHARight = parents.get(1);
                 SHAmergeBase = Git.getMergeBase(projectPath, SHALeft, SHARight);
             }
             //Check if is a fast-forward merge
-            if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
-                boolean result = extractDiff(projectPath, output, SHAmergeBase, SHALeft, SHARight, SHAMerge, "Left", projectName, sandbox);
-                if (!result) {
-                    System.out.println(SHAMerge + "does not has java files in both branches");
+            if (!(SHAmergeBase == null)) {
+                if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
+                    boolean result = extractDiff(projectPath, output, SHAmergeBase, SHALeft, SHARight, SHAMerge, "Left", projectName, sandbox);
+                    if (!result) {
+                        System.out.println(SHAMerge + "does not has java files in both branches");
+                        arquivo.write(SHAMerge + "," + "0.0" + "\n");
+                    }
                 }
-
             }
 
         }
+        arquivo.close();
     }
 
     public static boolean extractDiff(String projectPath, String output, String SHAmergeBase, String SHALeft, String SHARight, String mergeName, String branchName, String projectName, String sandbox) throws IOException {
@@ -181,7 +194,7 @@ public class ConceptualCoupling {
             }
         }
         //If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
-        if ((changedFilesLeft.isEmpty()) || (changedFilesRight.isEmpty())) {
+        if ((changedFilesLeft.isEmpty()) && (changedFilesRight.isEmpty())) {
             return false;
         }
 
@@ -322,6 +335,11 @@ public class ConceptualCoupling {
                 int begin = leftMethodDeclaration.getLocation().getElementLineBegin();
                 int end = leftMethodDeclaration.getLocation().getElementLineEnd();
                 String methodName = leftMethodDeclaration.getMethodDeclaration().getName().toString();
+                /*String mName = leftMethodDeclaration.getMethodDeclaration().resolveBinding().toString();
+                String methodName = mName.substring(0,mName.lastIndexOf("("));
+                methodName = methodName.replaceAll("[^a-zZ-Z1-9 ]", "");
+                methodName = methodName.replace(" ", "");*/
+
                 String classFilePath = ci.getFilePath();
                 String className = classFilePath.substring(classFilePath.lastIndexOf("/") + 1, classFilePath.length() - 5);
                 List<String> result = new ArrayList<>();
@@ -339,13 +357,13 @@ public class ConceptualCoupling {
                         }
                         line = initialline;
 
-                    } else if (lineDiff.startsWith("+ ")) {
+                    } else if (lineDiff.startsWith("+") && (!(lineDiff.startsWith("+++")))) {
                         line++;
                         if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
                         }
 
-                    } else if (lineDiff.startsWith("- ")) {
+                    } else if (lineDiff.startsWith("-") && (!(lineDiff.startsWith("---")))) {
                         count++;
                         /*if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
@@ -369,6 +387,11 @@ public class ConceptualCoupling {
                 int begin = leftMethodDeclarationBase.getLocation().getElementLineBegin();
                 int end = leftMethodDeclarationBase.getLocation().getElementLineEnd();
                 String methodName = leftMethodDeclarationBase.getMethodDeclaration().getName().toString();
+                /*String mName = leftMethodDeclarationBase.getMethodDeclaration().resolveBinding().toString();
+                String methodName = mName.substring(0,mName.lastIndexOf("("));
+                methodName = methodName.replaceAll("[^a-zZ-Z1-9 ]", "");
+                methodName = methodName.replace(" ", "");*/
+
                 String classFilePath = ci.getFilePath();
                 String className = classFilePath.substring(classFilePath.lastIndexOf("/") + 1, classFilePath.length() - 5);
                 List<String> result = new ArrayList<>();
@@ -386,13 +409,13 @@ public class ConceptualCoupling {
                         }
                         line = initialline;
 
-                    } else if (lineDiff.startsWith("+ ")) {
+                    } else if (lineDiff.startsWith("+") && (!(lineDiff.startsWith("+++")))) {
                         count++;
                         /*if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
                         }*/
 
-                    } else if (lineDiff.startsWith("- ")) {
+                    } else if (lineDiff.startsWith("-") && (!(lineDiff.startsWith("---")))) {
                         line++;
                         if ((line >= begin) && (line <= end)) {
                             result.add(lineDiff);
@@ -404,8 +427,6 @@ public class ConceptualCoupling {
                     }
                 }
                 if (!(result.isEmpty())) {
-                    //arquivo = createFile(result, projectName, path, branchName, methodName, className);
-
                     arquivo = createFileBase(result, projectName, path, branchName, methodName, className);
                 }
             }
@@ -426,10 +447,11 @@ public class ConceptualCoupling {
         arquivo.write(packageName);
         arquivo.write(className);
 
-        for (String line : lines) {
-            arquivo.write(line + "\n");
+        if (!(lines.isEmpty())) {
+            for (String line : lines) {
+                arquivo.write(line + "\n");
+            }
         }
-
         arquivo.close();
 
         return arquivo;
@@ -446,9 +468,10 @@ public class ConceptualCoupling {
         if (file.exists()) {
             //BufferedReader arquivo = new BufferedReader(new FileReader(nome));
             arquivo = new FileWriter(filePath, true); //new File
-
-            for (String line : lines) {
-                arquivo.append(line + "\n");
+            if (!(lines.isEmpty())) {
+                for (String line : lines) {
+                    arquivo.append(line + "\n");
+                }
             }
             arquivo.close();
         } else if (!(file.exists())) {

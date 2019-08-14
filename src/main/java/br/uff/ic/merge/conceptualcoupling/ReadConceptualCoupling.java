@@ -27,7 +27,7 @@ public class ReadConceptualCoupling {
 
         FileFilter filter = new FileFilter() {
             public boolean accept(File file) {
-                return file.getName().endsWith(".txt");
+                return ((file.getName().endsWith(".txt")) && (!(file.getName().startsWith("Especial"))));
             }
         };
         filePath = filePath + File.separator + "Output" + File.separator;
@@ -83,10 +83,10 @@ public class ReadConceptualCoupling {
                 String SHAMerge = "";
                 String similarity;
                 int coupling = 0;
-
+                SHAMerge = file.getName().substring(file.getName().lastIndexOf("Coupling") + 8, file.getName().length() - 4);
                 String line = br.readLine();
                 while (line != null) {
-                    SHAMerge = line.substring(0, line.indexOf(','));
+                    //SHAMerge = line.substring(0, line.indexOf(','));
                     similarity = line.substring(line.lastIndexOf(',') + 1, line.length());
                     line = br.readLine();
                     threshold = Double.parseDouble(similarity);
@@ -97,8 +97,10 @@ public class ReadConceptualCoupling {
                     }
                 } //chunks is the set of modified methods, that is, number of text files
                 String filePath_input = "";
-                filePath_input = filePath + File.separator + "Input" + File.separator;
-                String filePathName_input = filePath_input + "inputFileNames" + SHAMerge + ".txt";
+                filePath_input = filePath + File.separator + "Output" + File.separator;
+                String filePathName_input = filePath_input + "MergeConceptualCoupling" + SHAMerge + ".txt";
+
+                //if (!(SHAMerge.isEmpty())) {
                 File arquivoLeitura = new File(filePathName_input);
                 long tamanhoArquivo = arquivoLeitura.length();
                 FileInputStream fs = new FileInputStream(filePathName_input);
@@ -107,21 +109,24 @@ public class ReadConceptualCoupling {
                 LineNumberReader lineRead = new LineNumberReader(new InputStreamReader(in));
                 lineRead.skip(tamanhoArquivo);
 
-                int chunks = lineRead.getLineNumber();
+                int pairs_cartesian_product = lineRead.getLineNumber();
                 double normalized_coupling = 0;
-               // double third = 0;
+                // double third = 0;
 
-                if (chunks > 0) {
-                    normalized_coupling = total_intensity / chunks;
+                if (pairs_cartesian_product > 0) {
+                    normalized_coupling = total_intensity / pairs_cartesian_product;
                 }
 
                 /*if (coupling > 0) {
                     third = total_intensity / coupling;
                 }*/
-
-                arquivo.write(SHAMerge + "," + chunks + "," + total_intensity + "," + normalized_coupling + "\n");
+                arquivo.write(SHAMerge + "," + pairs_cartesian_product + "," + total_intensity + "," + normalized_coupling + "\n");
+                /*} else {
+                    arquivo.write(SHAMerge + "," + total_intensity + "\n");
+                }*/
 
             }
+            arquivo.close();
         }
 
     }
