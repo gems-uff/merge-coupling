@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>javafx.stage</title>
+</head>
+<body>
+<p>Provides the top-level container classes for JavaFX scripts.</p>
+<p>This package encapsulates the JavaFX graphical script surroundings for the
+Stage - Scene metaphor, with different capabilites available
+to the Stage depending on the underlying semantics of the runtime
+container.</p>
+<p>The JavaFX <font size="1"><sup>TM</sup></font> Stage interface provides
+interfaces and classes for the environment and presentation of JavaFX
+script instantiations. The stage presentation specifics for each
+JavaFX runtime platform will allow a script to be presented on different
+platforms with consistent functionality across each runtime.<br>
+</p>
+<p>The main areas of functionality of <code>javafx.stage</code>
+package include </p>
+<ol>
+  <li>
+    <p><b>Stage:</b> Stages are the graphical container for
+JavaFX script instantiations. Stages are the attributed drawing surface
+for the JavaFX script.</p>
+  </li>
+  <li>
+    <p><b>StageExtension:</b> Each Stage may have one or more StageExtension
+    instances set to provide additional functionality for the script.  A StageExtension will
+    only be utilized if the script is running within the profile specific to that StageExtension</p>
+  </li>
+  <li>
+    <p><b>AppletStageExtension:</b> When a JavaFX script is running within a browser, 
+    the <code>AppletStageExtension</code> is enabled to manage the drag transition from a browser
+    to the desktop.  Dragging a Stage out of a browser is supported in the Java <font size="1"><sup>TM</sup></font> 
+    plugin versions 6u10 and later.
+    </p>
+  </li>
+  <li>
+    <p><b>StageStyle:</b> The <code>StageStyle</code> specifies the decoration and visibility semantics
+    of the <code>Stage</code>.
+    </p>
+  </li>
+</ol>
+</body>
+</html>

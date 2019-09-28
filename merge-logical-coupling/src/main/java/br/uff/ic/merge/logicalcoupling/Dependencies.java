@@ -3,7 +3,10 @@ package br.uff.ic.merge.logicalcoupling;
 	import arch.Cell;
 	import arch.IMatrix2D;
 	import domain.Dominoes;
-	import java.util.ArrayList;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 	import java.util.HashMap;
 	import java.util.HashSet;
 	import java.util.List;
@@ -44,6 +47,7 @@ package br.uff.ic.merge.logicalcoupling;
 	     * @param antecedentFiles @param threshold @param consequentFiles @param
 	     * excepiontFiles
 	     * @return fileDependencies
+	     * @throws IOException 
 	     */
 	   /* public Map<EditedMethod, Set<EditedMethod>> getDependenciesAcrossBranches(
 	            List<EditedMethod> antecedentMethods,
@@ -52,18 +56,21 @@ package br.uff.ic.merge.logicalcoupling;
 	    	
 	    public Dependency_Information getDependenciesAcrossBranches(
 		            List<EditedMethod> antecedentMethods,
-		            List<EditedMethod> consequentMethods, double threshold) {
+		            List<EditedMethod> consequentMethods, double threshold, String SHAMerge, FileWriter fileThreshold) throws IOException {
 	    	
-	    	Dependency_Information Dependency_Information;
+	    	//Dependency_Information Dependency_Information;
 	    	
-	    	List<Dependency_Information> result = new ArrayList<>();
+	    	//List<Dependency_Information> result = new ArrayList<>();
 
 	        Map<EditedMethod, Set<EditedMethod>> dependenciesAcrossBranches = new HashMap<EditedMethod, Set<EditedMethod>>();
 
 	        IMatrix2D matrix = getDominoes().getMat();
+	        
 
 	        int rows = matrix.getMatrixDescriptor().getNumRows();
 	        int cols = matrix.getMatrixDescriptor().getNumCols();
+	        
+	        System.out.println("rows: " + rows + "cols: " + cols);
 
 	        List<Cell> cells = matrix.getNonZeroData();
 	        
@@ -87,23 +94,26 @@ package br.uff.ic.merge.logicalcoupling;
 	                    indexOf = consequentMethods.indexOf(consequentTmp);
 	                    if ((i != j) && (indexOf > -1)) {
 	                        for (Cell c : cells) {
-	                        	
+	                        	System.out.println("Acessing the cells");
+	                        	// ((c.value >= threshold) &&
 	                            //if ((c.value >= threshold) && (c.value < (threshold + 0.1)) && (c.row == j) && (c.col == i)) {
-	                        	 if ((c.value >= threshold)){
+	                        	 if ((c.row == j) && (c.col == i)){
                             		intensity = intensity + c.value;
                                 	coupling ++;
 	                                methodDependencies.add(consequentMethods.get(indexOf));
 	                                hasDependencies = true;
+	                                System.out.println("writing");
+	                                fileThreshold.write (SHAMerge + "," + antecendentTmp.getMethodName() + "," + consequentTmp.getMethodName() + "," + c.value + "\n");
 	                            }
 	                        }
 	                    }
 	                }
 	            }
-	            if (hasDependencies) {
+	            //if (hasDependencies) {
 	            	dependenciesAcrossBranches.put(antecendentTmp, methodDependencies);   
-	            }
+	            //}
 	        }
-	        return new Dependency_Information(dependenciesAcrossBranches,intensity, coupling);
+	        return new Dependency_Information(dependenciesAcrossBranches, intensity, coupling);
 	        //return dependenciesAcrossBranches;
 	    }
 

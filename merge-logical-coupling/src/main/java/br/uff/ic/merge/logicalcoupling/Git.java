@@ -184,27 +184,35 @@ public class Git {
         }
     }
 
-    public static List<String> logByDays(String repository, Date begin, Date end) {
+    public static List<String> logByDays(String repository, String begin, String end) {
         List<String> commits = new ArrayList<String>();
 
-        SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss z");
+        //SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss z");
 
-        String dateBegin = formater.format(begin);
-        String dateEnd = formater.format(end);
+        //String dateBegin = formater.format(begin);
+        //String dateEnd = formater.format(end);
 
         //git.sh is in ~/bin
-        String[] command = {"git",
+        /*String[] command = {"git",
             "log",
             "--all",
             "--reverse",
             "--format=%H;%ci",
-            "--after=\"" + dateBegin + "\"",
-            "--before=\"" + dateEnd + "\""};
+            "--after=\"" + begin + "\"",
+            "--before=\"" + end + "\""};*/
+        
+        String[] command = {"git",
+                "log",
+                "--all",
+                " --reverse",
+                " --after" + begin ,
+                " --before" + end };
 
         CMDOutput cmdOutput = CMD.cmdArray(repository, command);
 
         for (String output : cmdOutput.getOutput()) {
-            commits.add(output.split(";")[0]);
+            //commits.add(output.split(";")[0]);
+        	commits.add(output);
         }
 
         return commits;

@@ -7,8 +7,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,12 +42,18 @@ public class CoverageCompare {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, ParseException {
 		/*String input = "C:\\Users\\Carlos\\gitProjects";
-		String outputPathName = "C:\\Users\\Carlos\\projects";
-		Double threshold = 0.0;*/
+		String outputPathName = "C:\\Users\\Carlos\\projects";*/
 
 		String input = "";
 		String outputPathName = "";
+		String inputHash = "";
+		String begin = "";
+		String end = "";
+		String dateBegin = "";
+		String dateEnd = "";
 		Double threshold = 0.0;
+		
+		 SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss z");
 
 		try {
 
@@ -53,7 +61,10 @@ public class CoverageCompare {
 
 			options.addOption("i", true, "input directory");
 			options.addOption("o", true, "output directory");
-			options.addOption("t", true, "threshold from 0.0 to 1.0");
+			//options.addOption("h", true, "first hash to start logical coupling extraction");
+			//options.addOption("b", true, "begin date");
+			//options.addOption("e", true, "end date");
+			//options.addOption("t", true, "threshold from 0.0 to 1.0");
 
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "merge-logical-coupling", options, true);
@@ -70,6 +81,17 @@ public class CoverageCompare {
 			/*if (cmd.hasOption("t")){
 				threshold  = Double.parseDouble(cmd.getOptionValue("t"));
 			}*/
+			/*if (cmd.hasOption("h")){
+				inputHash = cmd.getOptionValue("h");
+			}*/
+			/*if (cmd.hasOption("b")){
+				begin = cmd.getOptionValue("b");
+				//dateBegin = formater.format(begin);
+			}
+			if (cmd.hasOption("e")){
+				end = cmd.getOptionValue("e");
+				//dateEnd = formater.format(end);
+			}*/
 		}catch (ParseException ex) {
 			Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
 
@@ -84,6 +106,8 @@ public class CoverageCompare {
 				String sandbox = outputPathName + File.separator + "sandbox-" + project.getName();
 
 				try (FileWriter file = new FileWriter(new File(outputPathName + File.separator + project.getName() + ".txt"))) {
+					
+					FileWriter fileThreshold = new FileWriter(new File(outputPathName + File.separator + project.getName() + "-alldata" + ".txt"));
 					System.out.println("\nAnalyzing the project\t" + project.getName());
 
 					String projectPath = project.toString();
@@ -92,10 +116,20 @@ public class CoverageCompare {
 					String SHAmergeBase = "";
 
 					String firstHash = Git.getFirstHash(projectPath);
+					
 
 					String _database = fillDatabase(project, project.getName(), outputPathName); //create database
+					
+					//String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
 
 					List<String> merges = Git.getMergeRevisions(projectPath);
+					
+					//List<String> merges = Git.logByDays(projectPath, begin, end);
+					
+					//String firstHash = merges.get(0);
+					
+					//System.out.println("hash: " + firstHash);
+					
 					for (String SHAMerge : merges) {
 						List<String> parents2 = getParents(projectPath, SHAMerge);
 						if (parents2.size() == 2) {
@@ -180,19 +214,21 @@ public class CoverageCompare {
 										List<EditedMethod> editedMethodRight = generateEditedMethod(cisR, repositoryRight, ASTchangedFilesRight, ASTmergeBase);
 
 										MergeMethods mergeMethods = getMergeMethods(project, SHAMerge, editedMethodLeft, editedMethodRight);
+										
+										//System.out.println(SHAMerge + " : " + mergeMethods.getMethodsOnBranchOne().toString() + "," +  mergeMethods.getMethodsOnBranchTwo().toString()); 
 
 										/*List<Map<EditedMethod, Set<EditedMethod>>> dependencies = getMethodsDependencies(
 											project, mergeMethods, firstHash, threshold, _database);*/
 										List<Dependency_Information> dependencies = getMethodsDependencies(
-												project, mergeMethods, firstHash, threshold, _database);
+												project, mergeMethods, firstHash, threshold, _database, SHAMerge, fileThreshold); //"C:\\Users\\Carlos\\projects\\gitdataminer_netty.sqlite"
 
 										boolean hasFilesDependencies = false;
 
-										if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
+										/*if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
 											hasFilesDependencies = true;
 										}
 
-										if (hasFilesDependencies) {
+										if (hasFilesDependencies) {*/
 
 											float intensityL = 0;
 											float intensityR = 0;
@@ -200,7 +236,7 @@ public class CoverageCompare {
 											float couplingL = 0;
 											float couplingR = 0;
 											float normalized_coupling = 0;
-											//float third = 0;
+											float cartesian_product = 0;
 
 											if (!(dependencies.get(0).getDependencyMap().isEmpty())){
 												intensityL = dependencies.get(0).getValues();
@@ -213,22 +249,30 @@ public class CoverageCompare {
 											}
 
 											total_coupling = (intensityL + intensityR)/2;
-											float chunks = editedMethodLeft.size() + editedMethodRight.size();
-											float couplings  = couplingL + couplingR;
+											//float chunks = editedMethodLeft.size() + editedMethodRight.size();
+											//float couplings  = couplingL + couplingR;
+											
+											
+											for (int i=0; i < editedMethodLeft.size(); i++){ 
+									            for (int j=0; j < editedMethodRight.size(); j++){
+									                cartesian_product ++;
+									            }
+									        }
+											System.out.println(SHAMerge + "left: " + editedMethodLeft.size() + " right: " + editedMethodRight.size() + "," + cartesian_product);
 
-											if (chunks > 0)
+											if (cartesian_product > 0)
 											{
-												normalized_coupling = total_coupling/chunks;
+												normalized_coupling = total_coupling/cartesian_product;
 											}
 
 											/*if (couplings > 0) {
 											third = intensityMerge/couplings;
 										}*/
 
-											file.write(SHAMerge + ", "  + chunks + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
-										}
+											file.write(SHAMerge + ", " + cartesian_product + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
+										//}
 									} else {
-										System.out.println(SHAMerge + "does not has java files in both branches");
+										System.out.println(SHAMerge + "does not have java files in both branches");
 										file.write(SHAMerge + "0.0" + "\n");
 									}
 								}
@@ -236,6 +280,8 @@ public class CoverageCompare {
 						}
 
 					} file.close();
+					  fileThreshold.close();
+					  System.out.println("Successfully completed");
 
 				} catch (IOException ex) {
 					Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
@@ -267,7 +313,7 @@ public class CoverageCompare {
 			MergeMethods mergeMethods, String firstHash, Double threshold, String _database) {*/
 
 	private static List<Dependency_Information> getMethodsDependencies(File project,
-			MergeMethods mergeMethods, String firstHash, Double threshold, String _database) {
+			MergeMethods mergeMethods, String firstHash, Double threshold, String _database, String SHAMerge, FileWriter fileThreshold) {
 
 		//List<Map<EditedMethod, Set<EditedMethod>>> depList = new ArrayList<>();
 
@@ -292,7 +338,7 @@ public class CoverageCompare {
 			List<Integer> matrices = new ArrayList<>(Arrays.asList(2));// ALTERAR AKI PARA 2 OU 5
 			System.out.println("Creating the dominoes of dependencies");
 			ArrayList<Dominoes> dominoesHistory = DominoesFiles.loadMatrices(_database, project.getName(),
-					"CPU", hashsOnPreviousHistory, editedMethods, matrices);
+					"GPU", hashsOnPreviousHistory, editedMethods, matrices);
 			Dominoes domCF = dominoesHistory.get(0);
 			Dominoes domCFt = domCF.cloneNoMatrix();
 			domCFt.transpose();
@@ -301,15 +347,18 @@ public class CoverageCompare {
 			// domCF.getMat().getNonZeroData().size() + "\t" +
 			// domCFt.getMat().getNonZeroData().size());
 			Dominoes domFF = domCFt.multiply(domCF);
+			System.out.println("Calculating Confidence...");
 			domFF.confidence();
 
 			Dependencies dependencies = new Dependencies(domFF);
 			//double threshold = Parameter.THRESHOLD;
+			
+			System.out.println("Extracting dependencies...");
 
 			depList.add(0, dependencies.getDependenciesAcrossBranches(mergeMethods.getMethodsOnBranchOne(),
-					mergeMethods.getMethodsOnBranchTwo(), threshold));
+					mergeMethods.getMethodsOnBranchTwo(), threshold, SHAMerge, fileThreshold));
 			depList.add(1, dependencies.getDependenciesAcrossBranches(mergeMethods.getMethodsOnBranchTwo(),
-					mergeMethods.getMethodsOnBranchOne(), threshold));
+					mergeMethods.getMethodsOnBranchOne(), threshold, SHAMerge, fileThreshold));
 			/*
 			depList.add(0, dependencies.getDependenciesAcrossBranches(mergeMethods.getMethodsOnBranchOne(),
 			mergeMethods.getMethodsOnBranchTwo(), threshold));
@@ -476,7 +525,6 @@ public class CoverageCompare {
             if (MethodDeclarationsBaseAux.size() > 1) {
                 //del equals method   
                 for (int i = MethodDeclarationsBaseAux.size() - 1; i > 0; i--) {
-                    IMethodBinding MethodDeclarationsBaseAux1 = MethodDeclarationsBaseAux.get(i).getMethodDeclaration().resolveBinding();
                     IMethodBinding MethodDeclarationsBaseAux2 = MethodDeclarationsBaseAux.get(i - 1).getMethodDeclaration().resolveBinding();
 
                     if (MethodDeclarationsBaseAux1 != null && MethodDeclarationsBaseAux2 != null && MethodDeclarationsBaseAux1.isEqualTo(MethodDeclarationsBaseAux2)) {
@@ -499,7 +547,7 @@ public class CoverageCompare {
             }
 			 */
 
-			//Union Left and Base methodDeclarations TÀ ERRADO
+			//Union Left and Base methodDeclarations 
 			for (MyMethodDeclaration MethodDeclarationBase : MethodDeclarationsBase) {
 				MethodDeclarations.add(MethodDeclarationBase);
 			}
@@ -538,7 +586,7 @@ public class CoverageCompare {
 			ChunkInformation ci, List<ClassLanguageContructs> ASTLeft) {
 
 		List<MyMethodDeclaration> result = new ArrayList<>();
-		List<Integer> repositionBase = new ArrayList<>();
+		//List<Integer> repositionBase = new ArrayList<>();
 		List<Operation> operations = new ArrayList<>();
 
 		String relativePath = null;

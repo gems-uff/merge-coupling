@@ -20,6 +20,7 @@ import org.apache.commons.lang.time.StopWatch;
 import arch.Cell;
 import arch.IMatrix2D;
 import arch.Matrix2DFactory;
+import arch.Session;
 import domain.Dominoes;
 
 public class DominoesFiles {
@@ -59,7 +60,7 @@ public class DominoesFiles {
             String _project, String _device, Collection<String> _commitsList,
             Collection<String> _filesList, List<Integer> matrices) throws IOException, SQLException, Exception {
 
-        //Session.startSession();
+        Session.startSession(0);
         openDatabase(_database);
 
         ArrayList<Dominoes> _dominoesList = new ArrayList<Dominoes>();
@@ -96,7 +97,7 @@ public class DominoesFiles {
             rs.close();
             smt.close();
         }
-        //Session.closeSection();
+        Session.closeSection();
         closeDatabase();
         return _dominoesList;
     }
@@ -468,8 +469,9 @@ public class DominoesFiles {
         IMatrix2D mat = Matrix2DFactory.getMatrix2D(_device, descriptor);
         mat.setData(cells);
 
-        stopWatch.stop(); // System.out.println("**Building matriz (ms): " + stopWatch.getTime()); 
-        // System.out.println("**Size: " + descriptor.getNumRows() + " x " + descriptor.getNumCols());
+        stopWatch.stop(); 
+        System.out.println("**Building matriz (ms): " + stopWatch.getTime()); 
+        System.out.println("**Size: " + descriptor.getNumRows() + " x " + descriptor.getNumCols());
 
         rs.close();
         smt.close();
