@@ -97,7 +97,7 @@ public class DominoesFiles {
             rs.close();
             smt.close();
         }
-        Session.closeSection();
+       // Session.closeSection();
         closeDatabase();
         return _dominoesList;
     }

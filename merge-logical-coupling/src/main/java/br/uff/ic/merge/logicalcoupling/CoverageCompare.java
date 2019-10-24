@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 
 import RepositoryImporter.CommitNode;
 import RepositoryImporter.RepositoryNode;
+import arch.Session;
 import br.uff.ic.coupling.ChunkInformation;
 import br.uff.ic.gems.resources.operation.Operation;
 import br.uff.ic.mergeguider.MergeGuider;
@@ -118,9 +119,9 @@ public class CoverageCompare {
 					String firstHash = Git.getFirstHash(projectPath);
 					
 
-					String _database = fillDatabase(project, project.getName(), outputPathName); //create database
+					//String _database = fillDatabase(project, project.getName(), outputPathName); //create database
 					
-					//String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
+					String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
 
 					List<String> merges = Git.getMergeRevisions(projectPath);
 					
@@ -334,7 +335,7 @@ public class CoverageCompare {
 			mergeMethods.getMethodsOnBranchTwo().stream().forEach((editedMethod) -> {
 				editedMethods.add("'" + editedMethod.getMethodName() + "'");
 			});
-
+			//Session.startSession(0);
 			List<Integer> matrices = new ArrayList<>(Arrays.asList(2));// ALTERAR AKI PARA 2 OU 5
 			System.out.println("Creating the dominoes of dependencies");
 			ArrayList<Dominoes> dominoesHistory = DominoesFiles.loadMatrices(_database, project.getName(),
@@ -365,7 +366,8 @@ public class CoverageCompare {
 			depList.add(1, dependencies.getDependenciesAcrossBranches(mergeMethods.getMethodsOnBranchTwo(),
 			mergeMethods.getMethodsOnBranchOne(), threshold));*/
 
-
+			//Session.closeSection();
+			
 		} catch (SQLException ex) {
 			Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
 
