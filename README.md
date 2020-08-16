@@ -20,5 +20,9 @@ Gleiph Ghiotto Lima de Menezes (UFJF, Brazil)
   
 2. To extract the structural coupling:
 
-3 . To extract the logical coupling:
+    2.1 - Execute java -jar MergeGuider-1.0-SNAPSHOT-jar-with-dependencies.jar -i "project-input" -o "output-result"
+
+3 . To extract the logical coupling (in GPU):
+ 
+    3.1 - Execute java --module-path /usr/share/openjfx/lib/ --add-modules javafx.controls -Djava.library.path=/usr/local/lib/ -jar LogicalCoupling-0.0.1-SNAPSHOT-jar-with-dependencies.jar -i "project-input" -o "output-result" -m "merge-list"
 
