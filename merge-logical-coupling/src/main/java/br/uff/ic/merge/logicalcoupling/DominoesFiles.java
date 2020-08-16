@@ -60,7 +60,7 @@ public class DominoesFiles {
             String _project, String _device, Collection<String> _commitsList,
             Collection<String> _filesList, List<Integer> matrices) throws IOException, SQLException, Exception {
 
-        Session.startSession(0);
+        //Session.startSession(0);
         openDatabase(_database);
 
         ArrayList<Dominoes> _dominoesList = new ArrayList<Dominoes>();

@@ -94,7 +94,7 @@ import java.util.ArrayList;
 	                    indexOf = consequentMethods.indexOf(consequentTmp);
 	                    if ((i != j) && (indexOf > -1)) {
 	                        for (Cell c : cells) {
-	                        	System.out.println("Acessing the cells");
+	                        	//System.out.println("Acessing the cells");
 	                        	// ((c.value >= threshold) &&
 	                            //if ((c.value >= threshold) && (c.value < (threshold + 0.1)) && (c.row == j) && (c.col == i)) {
 	                        	 if ((c.row == j) && (c.col == i)){
@@ -102,7 +102,7 @@ import java.util.ArrayList;
                                 	coupling ++;
 	                                methodDependencies.add(consequentMethods.get(indexOf));
 	                                hasDependencies = true;
-	                                System.out.println("writing");
+	                                System.out.println (SHAMerge + "," + antecendentTmp.getMethodName() + "," + consequentTmp.getMethodName() + "," + c.value + "\n");
 	                                fileThreshold.write (SHAMerge + "," + antecendentTmp.getMethodName() + "," + consequentTmp.getMethodName() + "," + c.value + "\n");
 	                            }
 	                        }

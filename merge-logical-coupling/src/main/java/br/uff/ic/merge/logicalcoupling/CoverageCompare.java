@@ -3,6 +3,8 @@ package br.uff.ic.merge.logicalcoupling;
 import domain.Dominoes;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,18 +45,20 @@ public class CoverageCompare {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, ParseException {
 		/*String input = "C:\\Users\\Carlos\\gitProjects";
-		String outputPathName = "C:\\Users\\Carlos\\projects";*/
+		String outputPathName = "C:\\Users\\Carlos\\projects";
+		String mergeFile = "C:\\Users\\Carlos\\projects\\merges";*/
 
 		String input = "";
 		String outputPathName = "";
+		String mergeFile = "";
 		String inputHash = "";
 		String begin = "";
 		String end = "";
 		String dateBegin = "";
 		String dateEnd = "";
 		Double threshold = 0.0;
-		
-		 SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss z");
+
+		SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss z");
 
 		try {
 
@@ -62,6 +66,7 @@ public class CoverageCompare {
 
 			options.addOption("i", true, "input directory");
 			options.addOption("o", true, "output directory");
+			options.addOption("m", true, "merge file");
 			//options.addOption("h", true, "first hash to start logical coupling extraction");
 			//options.addOption("b", true, "begin date");
 			//options.addOption("e", true, "end date");
@@ -78,6 +83,10 @@ public class CoverageCompare {
 			}
 			if (cmd.hasOption("o")){
 				outputPathName  = cmd.getOptionValue("o");
+			}
+
+			if (cmd.hasOption("m")){
+				mergeFile  = cmd.getOptionValue("m");
 			}
 			/*if (cmd.hasOption("t")){
 				threshold  = Double.parseDouble(cmd.getOptionValue("t"));
@@ -107,7 +116,7 @@ public class CoverageCompare {
 				String sandbox = outputPathName + File.separator + "sandbox-" + project.getName();
 
 				try (FileWriter file = new FileWriter(new File(outputPathName + File.separator + project.getName() + ".txt"))) {
-					
+
 					FileWriter fileThreshold = new FileWriter(new File(outputPathName + File.separator + project.getName() + "-alldata" + ".txt"));
 					System.out.println("\nAnalyzing the project\t" + project.getName());
 
@@ -117,115 +126,134 @@ public class CoverageCompare {
 					String SHAmergeBase = "";
 
 					String firstHash = Git.getFirstHash(projectPath);
-					
+
 
 					//String _database = fillDatabase(project, project.getName(), outputPathName); //create database
-					
+
 					String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
 
-					List<String> merges = Git.getMergeRevisions(projectPath);
-					
+					//List<String> merges = Git.getMergeRevisions(projectPath);
+
 					//List<String> merges = Git.logByDays(projectPath, begin, end);
-					
+
 					//String firstHash = merges.get(0);
-					
+
 					//System.out.println("hash: " + firstHash);
-					
-					for (String SHAMerge : merges) {
-						List<String> parents2 = getParents(projectPath, SHAMerge);
-						if (parents2.size() == 2) {
-							SHALeft = parents2.get(0);
-							SHARight = parents2.get(1);
-							SHAmergeBase = getMergeBase(projectPath, SHALeft, SHARight);
-							// Check if is a fast-forward merge
+					//buscar os merges de um txt
+					FileFilter filter = new FileFilter() {
+						public boolean accept(File file) {
+							return file.getName().startsWith(project.getName());
+						}
+					};
 
-							if (!(SHAmergeBase == null)) {
-								if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
+					File directoryMerge = new File(mergeFile);
+					File files[] = directoryMerge.listFiles(filter);
+					for (File fileMerge : files) {
+						FileInputStream stream = new FileInputStream(fileMerge);
+						InputStreamReader reader = new InputStreamReader(stream);
+						BufferedReader br = new BufferedReader(reader);
 
-									//Getting modified files 
-									List<String> changedFilesLeft = new ArrayList<String>();
-									List<String> changedFilesRight = new ArrayList<String>();
+						String line = br.readLine();
+						while (line != null) {
+							String SHAMerge = line.substring(0, 40);
+							
+							line = br.readLine();//próxima linha do arquivo
 
-									List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
-									List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
+							//for (String SHAMerge : merges) {
+							List<String> parents2 = getParents(projectPath, SHAMerge);
+							if (parents2.size() == 2) {
+								SHALeft = parents2.get(0);
+								SHARight = parents2.get(1);
+								SHAmergeBase = getMergeBase(projectPath, SHALeft, SHARight);
+								// Check if is a fast-forward merge
 
-									//to remove files that have extension other than java
-									for (int i = 0; i < changedFilesLeftAux.size(); i++) {
-										if (changedFilesLeftAux.get(i).endsWith("java")) {
-											changedFilesLeft.add(changedFilesLeftAux.get(i));
+								if (!(SHAmergeBase == null)) {
+									if ((!(SHAmergeBase.equals(SHALeft))) && (!(SHAmergeBase.equals(SHARight)))) {
+
+										//Getting modified files 
+										List<String> changedFilesLeft = new ArrayList<String>();
+										List<String> changedFilesRight = new ArrayList<String>();
+
+										List<String> changedFilesLeftAux = Git.getChangedFiles(projectPath, SHALeft, SHAmergeBase);
+										List<String> changedFilesRightAux = Git.getChangedFiles(projectPath, SHARight, SHAmergeBase);
+
+										//to remove files that have extension other than java
+										for (int i = 0; i < changedFilesLeftAux.size(); i++) {
+											if (changedFilesLeftAux.get(i).endsWith("java")) {
+												changedFilesLeft.add(changedFilesLeftAux.get(i));
+											}
 										}
-									}
-									for (int i = 0; i < changedFilesRightAux.size(); i++) {
-										if (changedFilesRightAux.get(i).endsWith("java")) {
-											changedFilesRight.add(changedFilesRightAux.get(i));
+										for (int i = 0; i < changedFilesRightAux.size(); i++) {
+											if (changedFilesRightAux.get(i).endsWith("java")) {
+												changedFilesRight.add(changedFilesRightAux.get(i));
+											}
 										}
-									}
-									//If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
-									if (!(changedFilesLeft.isEmpty()) || !(changedFilesRight.isEmpty())) {
-										//Extracting Left AST
-										System.out.println(SHAMerge);
-										System.out.println("Cloning left repository...");
-										String repositoryLeft = sandbox + File.separator + "left";
+										//If not exist java files, the variable changedFiles can be empty and we can't identify dependencies
+										if (!(changedFilesLeft.isEmpty()) || !(changedFilesRight.isEmpty())) {
+											//Extracting Left AST
+											System.out.println(SHAMerge);
+											System.out.println("Cloning left repository...");
+											String repositoryLeft = sandbox + File.separator + "left";
 
-										MergeGuider.clone(projectPath, repositoryLeft);
-										Git.reset(repositoryLeft);
-										Git.clean(repositoryLeft);
-										Git.checkout(repositoryLeft, SHALeft);
+											MergeGuider.clone(projectPath, repositoryLeft);
+											Git.reset(repositoryLeft);
+											Git.clean(repositoryLeft);
+											Git.checkout(repositoryLeft, SHALeft);
 
-										System.out.println("Extracting left repository AST...");
+											System.out.println("Extracting left repository AST...");
 
-										List<ClassLanguageContructs> ASTLeft = extractAST(repositoryLeft);
+											List<ClassLanguageContructs> ASTLeft = extractAST(repositoryLeft);
 
-										//Extracting Right AST
-										System.out.println("Cloning right repository...");
+											//Extracting Right AST
+											System.out.println("Cloning right repository...");
 
-										String repositoryRight = sandbox + File.separator + "right";
+											String repositoryRight = sandbox + File.separator + "right";
 
-										MergeGuider.clone(projectPath, repositoryRight);
-										Git.reset(repositoryRight);
-										Git.clean(repositoryRight);
-										Git.checkout(repositoryRight, SHARight);
+											MergeGuider.clone(projectPath, repositoryRight);
+											Git.reset(repositoryRight);
+											Git.clean(repositoryRight);
+											Git.checkout(repositoryRight, SHARight);
 
-										System.out.println("Extracting right repository AST...");
+											System.out.println("Extracting right repository AST...");
 
-										List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
+											List<ClassLanguageContructs> ASTRight = extractAST(repositoryRight);
 
-										//Extracting merge-base AST
-										System.out.println("Cloning merge-base repository...");
-										String repositoryBase = sandbox + File.separator + "base";
+											//Extracting merge-base AST
+											System.out.println("Cloning merge-base repository...");
+											String repositoryBase = sandbox + File.separator + "base";
 
-										MergeGuider.clone(projectPath, repositoryBase);
-										Git.reset(repositoryBase);
-										Git.clean(repositoryBase);
-										Git.checkout(repositoryBase, SHAmergeBase);
+											MergeGuider.clone(projectPath, repositoryBase);
+											Git.reset(repositoryBase);
+											Git.clean(repositoryBase);
+											Git.checkout(repositoryBase, SHAmergeBase);
 
-										System.out.println("Extracting merge-base repository AST...");
+											System.out.println("Extracting merge-base repository AST...");
 
-										List<ClassLanguageContructs> ASTmergeBase = extractAST(repositoryBase);
+											List<ClassLanguageContructs> ASTmergeBase = extractAST(repositoryBase);
 
-										//Getting modified files AST
-										List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
-										List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
+											//Getting modified files AST
+											List<ClassLanguageContructs> ASTchangedFilesLeft = generateASTFiles(ASTLeft, changedFilesLeft);
+											List<ClassLanguageContructs> ASTchangedFilesRight = generateASTFiles(ASTRight, changedFilesRight);
 
-										//Getting chunks tem que armazenar as linhas add e removidas para cada arquivo
-										List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
-										List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
+											//Getting chunks tem que armazenar as linhas add e removidas para cada arquivo
+											List<ChunkInformation> cisL = ChunkInformation.extractChunksInformation(repositoryLeft, changedFilesLeft, SHAmergeBase, SHALeft, "Left");
+											List<ChunkInformation> cisR = ChunkInformation.extractChunksInformation(repositoryRight, changedFilesRight, SHAmergeBase, SHARight, "Right");
 
-										List<EditedMethod> editedMethodLeft = generateEditedMethod(cisL, repositoryLeft, ASTchangedFilesLeft, ASTmergeBase);
-										List<EditedMethod> editedMethodRight = generateEditedMethod(cisR, repositoryRight, ASTchangedFilesRight, ASTmergeBase);
+											List<EditedMethod> editedMethodLeft = generateEditedMethod(cisL, repositoryLeft, ASTchangedFilesLeft, ASTmergeBase);
+											List<EditedMethod> editedMethodRight = generateEditedMethod(cisR, repositoryRight, ASTchangedFilesRight, ASTmergeBase);
 
-										MergeMethods mergeMethods = getMergeMethods(project, SHAMerge, editedMethodLeft, editedMethodRight);
-										
-										//System.out.println(SHAMerge + " : " + mergeMethods.getMethodsOnBranchOne().toString() + "," +  mergeMethods.getMethodsOnBranchTwo().toString()); 
+											MergeMethods mergeMethods = getMergeMethods(project, SHAMerge, editedMethodLeft, editedMethodRight);
 
-										/*List<Map<EditedMethod, Set<EditedMethod>>> dependencies = getMethodsDependencies(
+											//System.out.println(SHAMerge + " : " + mergeMethods.getMethodsOnBranchOne().toString() + "," +  mergeMethods.getMethodsOnBranchTwo().toString()); 
+
+											/*List<Map<EditedMethod, Set<EditedMethod>>> dependencies = getMethodsDependencies(
 											project, mergeMethods, firstHash, threshold, _database);*/
-										List<Dependency_Information> dependencies = getMethodsDependencies(
-												project, mergeMethods, firstHash, threshold, _database, SHAMerge, fileThreshold); //"C:\\Users\\Carlos\\projects\\gitdataminer_netty.sqlite"
+											List<Dependency_Information> dependencies = getMethodsDependencies(
+													project, mergeMethods, firstHash, threshold, _database, SHAMerge, fileThreshold); //"C:\\Users\\Carlos\\projects\\gitdataminer_netty.sqlite"
 
-										boolean hasFilesDependencies = false;
+											boolean hasFilesDependencies = false;
 
-										/*if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
+											/*if (!(dependencies.get(0).getDependencyMap().isEmpty()) || !(dependencies.get(1).getDependencyMap().isEmpty())) {
 											hasFilesDependencies = true;
 										}
 
@@ -252,13 +280,13 @@ public class CoverageCompare {
 											total_coupling = (intensityL + intensityR)/2;
 											//float chunks = editedMethodLeft.size() + editedMethodRight.size();
 											//float couplings  = couplingL + couplingR;
-											
-											
+
+
 											for (int i=0; i < editedMethodLeft.size(); i++){ 
-									            for (int j=0; j < editedMethodRight.size(); j++){
-									                cartesian_product ++;
-									            }
-									        }
+												for (int j=0; j < editedMethodRight.size(); j++){
+													cartesian_product ++;
+												}
+											}
 											System.out.println(SHAMerge + "left: " + editedMethodLeft.size() + " right: " + editedMethodRight.size() + "," + cartesian_product);
 
 											if (cartesian_product > 0)
@@ -271,19 +299,19 @@ public class CoverageCompare {
 										}*/
 
 											file.write(SHAMerge + ", " + cartesian_product + ", " + intensityL + ", " + intensityR + ", " + total_coupling + ", " + normalized_coupling + "\n");
-										//}
-									} else {
-										System.out.println(SHAMerge + "does not have java files in both branches");
-										file.write(SHAMerge + "0.0" + "\n");
+											//}
+										} else {
+											System.out.println(SHAMerge + "does not have java files in both branches");
+											file.write(SHAMerge + "0.0" + "\n");
+										}
 									}
 								}
 							}
-						}
 
-					} file.close();
-					  fileThreshold.close();
-					  System.out.println("Successfully completed");
-
+						} file.close();
+						fileThreshold.close();
+						System.out.println("Successfully completed");
+					}
 				} catch (IOException ex) {
 					Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
 					System.out.println("The file could not be created");
@@ -335,7 +363,7 @@ public class CoverageCompare {
 			mergeMethods.getMethodsOnBranchTwo().stream().forEach((editedMethod) -> {
 				editedMethods.add("'" + editedMethod.getMethodName() + "'");
 			});
-			//Session.startSession(0);
+			Session.startSession(0);
 			List<Integer> matrices = new ArrayList<>(Arrays.asList(2));// ALTERAR AKI PARA 2 OU 5
 			System.out.println("Creating the dominoes of dependencies");
 			ArrayList<Dominoes> dominoesHistory = DominoesFiles.loadMatrices(_database, project.getName(),
@@ -353,7 +381,7 @@ public class CoverageCompare {
 
 			Dependencies dependencies = new Dependencies(domFF);
 			//double threshold = Parameter.THRESHOLD;
-			
+
 			System.out.println("Extracting dependencies...");
 
 			depList.add(0, dependencies.getDependenciesAcrossBranches(mergeMethods.getMethodsOnBranchOne(),
@@ -367,7 +395,7 @@ public class CoverageCompare {
 			mergeMethods.getMethodsOnBranchOne(), threshold));*/
 
 			//Session.closeSection();
-			
+
 		} catch (SQLException ex) {
 			Logger.getLogger(CoverageCompare.class.getName()).log(Level.SEVERE, null, ex);
 
