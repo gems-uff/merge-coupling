@@ -128,9 +128,9 @@ public class CoverageCompare {
 					String firstHash = Git.getFirstHash(projectPath);
 
 
-					//String _database = fillDatabase(project, project.getName(), outputPathName); //create database
+					String _database = fillDatabase(project, project.getName(), outputPathName); //create database
 
-					String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
+					//String _database = outputPathName + File.separator + "gitdataminer_" + project.getName() + ".sqlite";
 
 					//List<String> merges = Git.getMergeRevisions(projectPath);
 
