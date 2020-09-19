@@ -52,7 +52,7 @@ public class ConceptualCoupling {
         try {
             options.addOption("i", true, "input directory");
             options.addOption("o", true, "output directory");
-            options.addOption("t", true, "threshold from 0.0 to 1.0");
+            //options.addOption("t", true, "threshold from 0.0 to 1.0");
 
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("conceptual-coupling", options, true);
