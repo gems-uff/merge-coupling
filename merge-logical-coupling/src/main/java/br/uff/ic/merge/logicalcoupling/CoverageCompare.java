@@ -43,6 +43,47 @@ import br.uff.ic.mergeguider.languageConstructs.MyMethodDeclaration;
  */
 public class CoverageCompare {
 
+	/**
+	 * Método principal que analisa repositórios Git para calcular o acoplamento lógico entre métodos em merges.
+	 * 
+	 * O que esse código faz:
+	 * 1. Processa argumentos da linha de comando para obter:
+	 *    - Diretório de entrada (-i) contendo os projetos Git
+	 *    - Diretório de saída (-o) para salvar os resultados
+	 *    - Arquivo com lista de merges (-m) para analisar
+	 * 
+	 * 2. Para cada projeto no diretório de entrada:
+	 *    - Cria um banco de dados SQLite com o histórico de commits
+	 *    - Lê a lista de commits de merge do arquivo especificado
+	 * 
+	 * 3. Para cada merge commit:
+	 *    - Identifica os dois commits pais (branches que foram mesclados)
+	 *    - Identifica o merge-base (ancestral comum dos dois branches)
+	 *    - Extrai os arquivos Java modificados em cada branch
+	 *    - Clona o repositório em três versões: left (branch 1), right (branch 2) e base (merge-base)
+	 *    - Extrai a AST (Abstract Syntax Tree) de cada versão
+	 *    - Identifica os métodos que foram editados em cada branch
+	 *    - Calcula as dependências lógicas entre os métodos editados usando matrizes de co-mudança
+	 *    - Calcula métricas de acoplamento:
+	 *      * intensityL: intensidade de acoplamento no branch esquerdo
+	 *      * intensityR: intensidade de acoplamento no branch direito
+	 *      * total_coupling: média dos acoplamentos dos dois branches
+	 *      * cartesian_product: produto cartesiano dos métodos editados (left × right)
+	 *      * normalized_coupling: acoplamento normalizado (total_coupling / cartesian_product)
+	 * 
+	 * 4. Salva os resultados em dois arquivos:
+	 *    - [projeto].txt: contém métricas resumidas por merge
+	 *    - [projeto]-alldata.txt: contém dados detalhados de todas as dependências encontradas
+	 * 
+	 * O objetivo é identificar o grau de acoplamento lógico entre mudanças feitas em branches diferentes
+	 * durante um merge, ajudando a entender a complexidade e os riscos potenciais da integração.
+	 * 
+	 * @param args Argumentos da linha de comando: -i <input-dir> -o <output-dir> -m <merge-file>
+	 * @throws IOException Se houver erro ao ler/escrever arquivos
+	 * @throws ClassNotFoundException Se classes necessárias não forem encontradas
+	 * @throws SQLException Se houver erro na manipulação do banco de dados
+	 * @throws ParseException Se houver erro ao fazer parse dos argumentos da linha de comando
+	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, ParseException {
 		/*String input = "C:\\Users\\Carlos\\gitProjects";
 		String outputPathName = "C:\\Users\\Carlos\\projects";
